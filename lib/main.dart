@@ -4,9 +4,7 @@ import 'package:jessica/pages/orders_page.dart';
 import 'package:jessica/pages/unique_params_page.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
-
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'mock_data.dart'; // Import the mock data
 
 Future<void> main() async {
   await dotenv.load(fileName: ".env");
@@ -72,7 +70,11 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  WebSocketChannel? channel;
+  final WebSocketChannel channel = WebSocketChannel.connect(
+    Uri.parse(
+        "ws://${dotenv.env["JESSE_SERVER_IP"]}:${dotenv.env["JESSE_SERVER_PORT"]}/ws"),
+  );
+
   int _selectedIndex = 0;
   Map<String, dynamic> _data = {};
   Map<String, dynamic> decodedMessage = {};
@@ -87,26 +89,13 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    try {
-      channel = WebSocketChannel.connect(
-        Uri.parse(
-            "ws://${dotenv.env["JESSE_SERVER_IP"]}:${dotenv.env["JESSE_SERVER_PORT"]}/ws"),
-      );
-
-      channel?.stream.listen((message) {
-        final decodedMessage = json.decode(message);
-        setState(() {
-          this.decodedMessage = decodedMessage;
-          _data = decodedMessage[selectedKey];
-        });
-      });
-    } catch (e) {
-      // Use mock data if the server is not available
+    channel.stream.listen((message) {
+      final decodedMessage = json.decode(message);
       setState(() {
-        decodedMessage = mockData;
-        _data = mockData[selectedKey];
+        this.decodedMessage = decodedMessage;
+        _data = decodedMessage[selectedKey];
       });
-    }
+    });
   }
 
   void _selectKey(String key) {
@@ -118,7 +107,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void dispose() {
-    channel?.sink.close();
+    channel.sink.close();
     super.dispose();
   }
 
@@ -148,43 +137,45 @@ class _MyHomePageState extends State<MyHomePage> {
             IconButton(
               icon: const Icon(Icons.list),
               onPressed: () {
-                showModalBottomSheet(
+                showDialog(
                   context: context,
                   builder: (context) {
-                    return Container(
-                      color: Color(0xdd021526),
-                      padding: const EdgeInsets.all(16.0),
-                      child: ListView(
-                        children: decodedMessage.keys.map((key) {
-                          return Card(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .secondaryContainer,
-                            margin: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: ListTile(
-                              title: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: key.split(':').map((part) {
-                                  return Text(
-                                    part,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(
-                                          color: Theme.of(context)
-                                              .colorScheme
-                                              .onSecondaryContainer,
-                                        ),
-                                  );
-                                }).toList(),
+                    return AlertDialog(
+                      title: const Text('Select Route'),
+                      content: Container(
+                        width: double.maxFinite,
+                        child: ListView(
+                          shrinkWrap: true,
+                          children: decodedMessage.keys.map((key) {
+                            return Card(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .secondaryContainer,
+                              margin: const EdgeInsets.symmetric(vertical: 8.0),
+                              child: ListTile(
+                                title: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: key.split(':').map((part) {
+                                    return Text(
+                                      part,
+                                      style: TextStyle(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSecondaryContainer,
+                                        fontSize:
+                                            14, // Adjust font size as needed
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                                onTap: () {
+                                  _selectKey(key);
+                                  Navigator.of(context).pop();
+                                },
                               ),
-                              onTap: () {
-                                _selectKey(key);
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                          );
-                        }).toList(),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     );
                   },
