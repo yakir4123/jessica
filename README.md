@@ -1,6 +1,6 @@
-# jessica
+# Jessica
 
-A new Flutter project.
+An app for monitor parameters of jesse bot.
 
 ## Getting Started
 
