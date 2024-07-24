@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:jessica/pages/general_params_page.dart';
+import 'package:jessica/pages/orders_page.dart';
+import 'package:jessica/pages/unique_params_page.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'dart:convert';
-import 'general_params_page.dart';
-import 'orders_page.dart';
-import 'unique_params.dart';
-import 'custom_theme_extension.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 Future<void> main() async {
