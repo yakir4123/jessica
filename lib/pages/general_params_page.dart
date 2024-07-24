@@ -1,18 +1,25 @@
+import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:jessica/widgets/general_card.dart';
 
 class GeneralParamsPage extends StatelessWidget {
   final Map<String, dynamic> data;
+  Map<String, dynamic> globalParamsData = {};
 
   GeneralParamsPage({required this.data});
 
   @override
   Widget build(BuildContext context) {
-    Map<String, dynamic> global_params_data = {};
     try {
-      global_params_data = data["general"];
+      globalParamsData = data["general"];
     } catch (e) {
       // Handle error if needed
+      globalParamsData = {
+        "update-time": 0,
+        "today-pnl": 0,
+        "balance": 0,
+        "available-margin": 0
+      };
     }
 
     return Padding(
@@ -28,12 +35,12 @@ class GeneralParamsPage extends StatelessWidget {
                 childAspectRatio:
                     7 / 4, // Ratio of width to height for each grid item
               ),
-              itemCount: global_params_data.length,
+              itemCount: globalParamsData.length,
               itemBuilder: (context, index) {
-                String key = global_params_data.keys.elementAt(index);
+                String key = globalParamsData.keys.elementAt(index);
                 return GeneralCard(
                   title: key,
-                  subtitle: global_params_data[key].toString(),
+                  subtitle: formatItem(key),
                 );
               },
             ),
@@ -41,5 +48,34 @@ class GeneralParamsPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String formatItem(String key) {
+    List<String> validKeys = [
+      'update-time',
+      'today-pnl',
+      'balance',
+      'available-margin',
+    ];
+    if (!validKeys.contains(key)) {
+      return "";
+    }
+    DateTime updateTime =
+        DateTime.fromMillisecondsSinceEpoch(globalParamsData["update-time"]);
+
+    // Format the numbers with one decimal place
+    String todayPnl = globalParamsData['today-pnl'].toStringAsFixed(1);
+    String balance = globalParamsData['balance'].toStringAsFixed(1);
+    String availableMargin =
+        globalParamsData['available-margin'].toStringAsFixed(1);
+
+    // Create the response map
+    Map<String, String> resp = {
+      'update-time': updateTime.toString(),
+      'today-pnl': todayPnl,
+      'balance': balance,
+      'available-margin': availableMargin,
+    };
+    return resp[key]!;
   }
 }
