@@ -17,6 +17,12 @@ class OrdersPage extends StatelessWidget {
 
     List<Widget> orderWidgets = ordersData.entries.map((entry) {
       String key = entry.key;
+      if (key == 'current-price') { // just hotfix
+        return OrderCard(
+          title: key,
+          orderList: [{"price": entry.value, "qty": 0, "dollar": 0}],
+        );
+      }
       List<dynamic> orderList = List<dynamic>.from(entry.value);
       orderList.sort((a, b) => (a["price"] ?? 0).compareTo(b["price"] ?? 0));
 
