@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jessica/services/providers.dart';
 import 'package:jessica/widgets/order_card.dart';
 
-class OrdersPage extends StatelessWidget {
-  final Map<String, dynamic> data;
-
-  OrdersPage({required this.data});
+class OrdersPage extends ConsumerWidget {
+  const OrdersPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final data = ref.watch(dataServiceProvider);
     Map<String, dynamic> ordersData = {};
     try {
       ordersData = Map<String, dynamic>.from(data["orders"]);
