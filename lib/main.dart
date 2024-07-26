@@ -1,17 +1,16 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jessica/pages/general_params_page.dart';
 import 'package:jessica/pages/orders_page.dart';
 import 'package:jessica/pages/unique_params_page.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
-
+import 'package:jessica/services/providers.dart';
 import 'custom_theme_extension.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 const Color primaryColor = Color(0xff1F205B);
@@ -43,23 +42,15 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyHomePage extends StatefulWidget {
+class MyHomePage extends ConsumerStatefulWidget {
   const MyHomePage({super.key});
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  final WebSocketChannel channel = WebSocketChannel.connect(
-    Uri.parse(
-        "ws://${dotenv.env["JESSE_SERVER_IP"]}:${dotenv.env["JESSE_SERVER_PORT"]}/ws"),
-  );
-
+class _MyHomePageState extends ConsumerState<MyHomePage> {
   int _selectedIndex = 0;
-  Map<String, dynamic> _data = {};
-  Map<String, dynamic> decodedMessage = {};
-  String selectedKey = "LiveStrategy:Binance Perpetual Futures:SOL-USDT:15m";
 
   void _onItemTapped(int index) {
     setState(() {
@@ -68,32 +59,8 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    channel.stream.listen((message) {
-      final decodedMessage = json.decode(message);
-      setState(() {
-        this.decodedMessage = decodedMessage;
-        _data = decodedMessage[selectedKey];
-      });
-    });
-  }
-
-  void _selectKey(String key) {
-    setState(() {
-      selectedKey = key;
-      _data = decodedMessage[key];
-    });
-  }
-
-  @override
-  void dispose() {
-    channel.sink.close();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final dataService = ref.read(dataServiceProvider.notifier);
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -111,7 +78,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     content: SizedBox(
                       width: double.maxFinite,
                       child: ListView(
-                        children: decodedMessage.keys.map((key) {
+                        children: dataService.decodedMessage.keys.map((key) {
                           return Card(
                             margin: const EdgeInsets.symmetric(vertical: 8.0),
                             child: ListTile(
@@ -129,7 +96,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                 ).toList(),
                               ),
                               onTap: () {
-                                _selectKey(key);
+                                dataService.selectKey(key);
                                 Navigator.of(context).pop();
                               },
                             ),
@@ -145,7 +112,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: selectedKey.split(':').map(
+          children: dataService.selectedKey.split(':').map(
             (part) {
               return Text(
                 part,
@@ -162,9 +129,9 @@ class _MyHomePageState extends State<MyHomePage> {
       body: IndexedStack(
         index: _selectedIndex,
         children: [
-          GeneralParamsPage(data: _data),
-          OrdersPage(data: _data),
-          UniqueParamsPage(data: _data),
+          GeneralParamsPage(),
+          const OrdersPage(),
+          const UniqueParamsPage(),
         ],
       ),
       bottomNavigationBar: Theme(

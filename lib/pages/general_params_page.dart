@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jessica/services/providers.dart';
 import 'package:jessica/widgets/general_card.dart';
 
-class GeneralParamsPage extends StatelessWidget {
-  final Map<String, dynamic> data;
+class GeneralParamsPage extends ConsumerWidget {
   Map<String, dynamic> globalParamsData = {};
 
-  GeneralParamsPage({super.key, required this.data});
+  GeneralParamsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final data = ref.watch(dataServiceProvider);
     try {
       globalParamsData = data["general"];
     } catch (e) {
