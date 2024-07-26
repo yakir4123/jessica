@@ -17,10 +17,13 @@ class OrdersPage extends StatelessWidget {
 
     List<Widget> orderWidgets = ordersData.entries.map((entry) {
       String key = entry.key;
-      if (key == 'current-price') { // just hotfix
+      if (key == 'current-price') {
+        // just hotfix
         return OrderCard(
           title: key,
-          orderList: [{"price": entry.value, "qty": 0, "dollar": 0}],
+          orderList: [
+            {"price": entry.value, "qty": 0, "dollar": 0}
+          ],
         );
       }
       List<dynamic> orderList = List<dynamic>.from(entry.value);

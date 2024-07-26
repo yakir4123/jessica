@@ -1,70 +1,51 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:jessica/pages/general_params_page.dart';
 import 'package:jessica/pages/orders_page.dart';
 import 'package:jessica/pages/unique_params_page.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
-import 'dart:convert';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+import 'custom_theme_extension.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
+const Color primaryColor = Color(0xff1F205B);
+const Color accentColor = Color(0xFFEBA3C8);
+const Color backgroundColor = Color(0xdd021526);
+const Color textColor = Color(0xFFFDFDFE);
+const Color secondaryColor = Color(0xFF3C3D78);
+
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xff1F205B);
-    const Color accentColor = Color(0xFFEBA3C8);
-    const Color backgroundColor = Color(0xdd021526);
-    const Color textColor = Color(0xFFFDFDFE);
-    const Color secondaryColor = Color(0xFF3C3D78);
     return MaterialApp(
       title: 'Jessica',
-      theme: ThemeData(
-        primaryColor: primaryColor,
-        scaffoldBackgroundColor: backgroundColor,
-        textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: textColor),
-          bodyMedium: TextStyle(color: textColor),
-          bodySmall: TextStyle(color: textColor),
-          headlineLarge: TextStyle(color: textColor),
-          headlineMedium: TextStyle(color: textColor),
-          headlineSmall: TextStyle(color: textColor),
-        ),
-        dialogBackgroundColor: backgroundColor,
-        cardTheme: const CardTheme(
-          color: secondaryColor,
-        ),
-        buttonTheme: const ButtonThemeData(
-          buttonColor: accentColor,
-          textTheme: ButtonTextTheme.primary,
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: primaryColor,
-          titleTextStyle: TextStyle(color: textColor, fontSize: 20),
-        ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: accentColor,
-        ),
-        cardColor: secondaryColor,
-        colorScheme: ColorScheme.fromSwatch().copyWith(
-          primary: primaryColor,
-          primaryContainer: backgroundColor,
-          secondary: accentColor,
-          secondaryContainer: secondaryColor,
-          surface: backgroundColor,
-          onPrimary: backgroundColor,
-          onSecondary: textColor,
-          onSurface: textColor,
-        ),
-      ),
-      home: MyHomePage(),
+      theme: buildTheme(),
+      onGenerateRoute: (settings) {
+        final page = switch (settings.name) {
+          '/home_screen' => const MyHomePage(),
+          _ => const Center(child: Text('404 Page Not Found'))
+        };
+        return MaterialPageRoute<Widget>(
+          builder: (context) => page,
+          settings: settings,
+        );
+      },
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
+  const MyHomePage({super.key});
+
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
@@ -115,76 +96,68 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          children: [
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: selectedKey.split(':').map((part) {
-                    return Text(
-                      part,
-                      style: const TextStyle(
-                        fontSize: 14, // Adjust font size as needed
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.list,
+              color: Theme.of(context).colorScheme.secondary,
             ),
-            IconButton(
-              icon: const Icon(Icons.list),
-              onPressed: () {
-                showDialog(
-                  context: context,
-                  builder: (context) {
-                    return AlertDialog(
-                      title: const Text('Select Route'),
-                      content: Container(
-                        width: double.maxFinite,
-                        child: ListView(
-                          shrinkWrap: true,
-                          children: decodedMessage.keys.map((key) {
-                            return Card(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .secondaryContainer,
-                              margin: const EdgeInsets.symmetric(vertical: 8.0),
-                              child: ListTile(
-                                title: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: key.split(':').map((part) {
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) {
+                  return AlertDialog(
+                    title: const Text('Select Route'),
+                    content: SizedBox(
+                      width: double.maxFinite,
+                      child: ListView(
+                        children: decodedMessage.keys.map((key) {
+                          return Card(
+                            margin: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: ListTile(
+                              title: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: key.split(':').map(
+                                  (part) {
                                     return Text(
                                       part,
-                                      style: TextStyle(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSecondaryContainer,
-                                        fontSize:
-                                            14, // Adjust font size as needed
+                                      style: const TextStyle(
+                                        fontSize: 14,
                                       ),
                                     );
-                                  }).toList(),
-                                ),
-                                onTap: () {
-                                  _selectKey(key);
-                                  Navigator.of(context).pop();
-                                },
+                                  },
+                                ).toList(),
                               ),
-                            );
-                          }).toList(),
-                        ),
+                              onTap: () {
+                                _selectKey(key);
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                          );
+                        }).toList(),
                       ),
-                    );
-                  },
-                );
-              },
-            ),
-          ],
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: selectedKey.split(':').map(
+            (part) {
+              return Text(
+                part,
+                style: const TextStyle(
+                  fontSize: 14,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              );
+            },
+          ).toList(),
         ),
-        toolbarHeight: 100, // Adjust height as needed
+        toolbarHeight: 100,
       ),
       body: IndexedStack(
         index: _selectedIndex,
@@ -194,27 +167,33 @@ class _MyHomePageState extends State<MyHomePage> {
           UniqueParamsPage(data: _data),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'General',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.business),
-            label: 'Orders',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.school),
-            label: 'Unique',
-          ),
-        ],
-        currentIndex: _selectedIndex,
-        selectedItemColor: Theme.of(context).colorScheme.secondary,
-        unselectedItemColor:
-            Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        onTap: _onItemTapped,
+      bottomNavigationBar: Theme(
+        data: ThemeData(
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+        ),
+        child: BottomNavigationBar(
+          items: const <BottomNavigationBarItem>[
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'General',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.business),
+              label: 'Orders',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.school),
+              label: 'Unique',
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          selectedItemColor: Theme.of(context).colorScheme.secondary,
+          unselectedItemColor:
+              Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+          backgroundColor: Theme.of(context).colorScheme.surface,
+          onTap: _onItemTapped,
+        ),
       ),
     );
   }

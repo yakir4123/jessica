@@ -39,6 +39,7 @@ dependencies:
   flutter_dotenv: ^5.1.0
   intl: ^0.17.0
   flutter_launcher_icons: ^0.13.1
+  flutter_riverpod: ^2.5.1
 
 dev_dependencies:
   flutter_test:

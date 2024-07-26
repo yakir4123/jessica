@@ -1,4 +1,3 @@
-import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
 import 'package:jessica/widgets/general_card.dart';
 
@@ -6,7 +5,7 @@ class GeneralParamsPage extends StatelessWidget {
   final Map<String, dynamic> data;
   Map<String, dynamic> globalParamsData = {};
 
-  GeneralParamsPage({required this.data});
+  GeneralParamsPage({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +32,7 @@ class GeneralParamsPage extends StatelessWidget {
                 crossAxisSpacing: 16.0, // Horizontal spacing between grid items
                 mainAxisSpacing: 16.0, // Vertical spacing between grid items
                 childAspectRatio:
-                    7 / 4, // Ratio of width to height for each grid item
+                    6 / 4, // Ratio of width to height for each grid item
               ),
               itemCount: globalParamsData.length,
               itemBuilder: (context, index) {
