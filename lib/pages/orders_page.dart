@@ -79,14 +79,10 @@ class OrdersPage extends ConsumerWidget {
         tooltipBehavior: TooltipBehavior(enable: false),
         series: series,
         primaryXAxis: NumericAxis(
-          title: AxisTitle(
-              text: 'Index', textStyle: const TextStyle(color: Colors.white)),
           minimum: minX - 1, // Start a little before the first point
           maximum: maxX + 1, // End a little after the last point
         ),
         primaryYAxis: NumericAxis(
-          title: AxisTitle(
-              text: 'Price', textStyle: const TextStyle(color: Colors.white)),
           labelFormat: '{value}',
           minimum: minY -
               (0.1 * (maxY - minY)), // Start a little below the lowest point

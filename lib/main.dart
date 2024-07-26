@@ -61,6 +61,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     final dataService = ref.read(dataServiceProvider.notifier);
+    ref.watch(dataServiceProvider);
     return Scaffold(
       appBar: AppBar(
         actions: [
