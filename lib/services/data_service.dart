@@ -17,13 +17,21 @@ class DataService extends StateNotifier<Map<String, dynamic>> {
     _channel.stream.listen((message) {
       final decodedMessage = json.decode(message) as Map<String, dynamic>;
       this.decodedMessage = decodedMessage;
-      state = Map<String, dynamic>.from(decodedMessage[selectedKey] ?? {});
+      if (decodedMessage.containsKey(selectedKey)) {
+        state = Map<String, dynamic>.from(decodedMessage[selectedKey]);
+      } else {
+        state = {};
+      }
     });
   }
 
   void selectKey(String key) {
     selectedKey = key;
-    state = Map<String, dynamic>.from(decodedMessage[key] ?? {});
+    if (decodedMessage.containsKey(key)) {
+      state = Map<String, dynamic>.from(decodedMessage[key]);
+    } else {
+      state = {};
+    }
   }
 
   @override

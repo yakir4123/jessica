@@ -1,13 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:jessica/services/providers.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 
-class OrdersPage extends ConsumerWidget {
+class OrdersPage extends ConsumerStatefulWidget {
   const OrdersPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  _OrdersPageState createState() => _OrdersPageState();
+}
+
+class _OrdersPageState extends ConsumerState<OrdersPage> {
+  Map<String, bool> _selectedSeries = {};
+
+  // Define the color map for each key
+  final Map<String, Color> _colorMap = {
+    "buy-orders": Colors.yellow,
+    "sell-orders": Colors.green,
+    "take-profit-orders": Colors.blue,
+    "stop-loss-orders": Colors.orange,
+    "average-entry": Colors.red,
+  };
+
+  @override
+  Widget build(BuildContext context) {
     final data = ref.watch(dataServiceProvider);
     Map<String, dynamic> ordersData = {};
     try {
@@ -33,6 +49,10 @@ class OrdersPage extends ConsumerWidget {
     ordersData.forEach((key, value) {
       if (key == 'current-price') return;
 
+      if (_selectedSeries[key] == false) {
+        return; // Skip if the series is not selected
+      }
+
       List<_OrderData> orderData = [];
       List<dynamic> orderList = List<dynamic>.from(value);
 
@@ -56,11 +76,13 @@ class OrdersPage extends ConsumerWidget {
         xValueMapper: (_OrderData order, _) => order.index,
         yValueMapper: (_OrderData order, _) => order.price,
         sizeValueMapper: (_OrderData order, _) => order.size,
-        color: _getColor(seriesIndex),
+        color: _colorMap[key] ??
+            Colors.grey, // Use color from the map or default to grey
         name: key,
         markerSettings: MarkerSettings(
           isVisible: true,
-          color: _getColor(seriesIndex),
+          color: _colorMap[key] ??
+              Colors.grey, // Use color from the map or default to grey
         ),
         onPointTap: (ChartPointDetails point) {
           _showOrderDetails(context, point.pointIndex ?? 0,
@@ -71,25 +93,62 @@ class OrdersPage extends ConsumerWidget {
       seriesIndex++;
     });
 
-    // Adjusting the axis range
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: SfCartesianChart(
-        legend: Legend(isVisible: true),
-        tooltipBehavior: TooltipBehavior(enable: false),
-        series: series,
-        primaryXAxis: NumericAxis(
-          minimum: minX - 1, // Start a little before the first point
-          maximum: maxX + 1, // End a little after the last point
+    return Column(
+      children: [
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(5.0),
+            child: series.isNotEmpty
+                ? SfCartesianChart(
+                    tooltipBehavior: TooltipBehavior(enable: false),
+                    series: series,
+                    primaryXAxis: NumericAxis(
+                      minimum:
+                          minX - 1, // Start a little before the first point
+                      maximum: maxX + 1, // End a little after the last point
+                    ),
+                    primaryYAxis: NumericAxis(
+                      labelFormat: '{value}',
+                      minimum: minY - (0.1 * (maxY - minY)),
+                      // Start a little below the lowest point
+                      maximum: maxY +
+                          (0.1 *
+                              (maxY -
+                                  minY)), // End a little above the highest point
+                    ),
+                  )
+                : const Center(
+                    child: Text('Nothing to see'),
+                  ),
+          ),
         ),
-        primaryYAxis: NumericAxis(
-          labelFormat: '{value}',
-          minimum: minY -
-              (0.1 * (maxY - minY)), // Start a little below the lowest point
-          maximum: maxY +
-              (0.1 * (maxY - minY)), // End a little above the highest point
+        Wrap(
+          alignment: WrapAlignment.center,
+          children: ordersData.keys
+              .where((key) => key != 'current-price')
+              .map((key) => Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        minimumSize: const Size(
+                            50, 30), // Reduce the size of the buttons
+                        backgroundColor: _selectedSeries[key] == false
+                            ? Colors.grey
+                            : _colorMap[key] ?? Colors.grey,
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _selectedSeries[key] =
+                              !(_selectedSeries[key] ?? true);
+                        });
+                      },
+                      child: Text(
+                          key.replaceAll("-", " ").replaceAll("orders", "")),
+                    ),
+                  ))
+              .toList(),
         ),
-      ),
+      ],
     );
   }
 
@@ -134,24 +193,29 @@ class OrdersPage extends ConsumerWidget {
     return 1.0; // Default value if key is not 'buy'
   }
 
-  Color _getColor(int index) {
-    switch (index) {
-      case 0:
-        return Colors.yellow;
-      case 1:
-        return Colors.green;
-      case 2:
-        return Colors.blue;
-      case 3:
-        return Colors.white70;
-      default:
-        return Colors.red;
+  @override
+  void initState() {
+    super.initState();
+    // Initialize _selectedSeries with true for all keys
+    final data = ref.read(dataServiceProvider);
+
+    Map<String, dynamic> ordersData = {};
+    try {
+      ordersData = Map<String, dynamic>.from(data["orders"]);
+    } catch (e) {
+      // Handle error if needed
     }
+    setState(() {
+      ordersData.keys.where((key) => key != 'current-price').forEach((key) {
+        _selectedSeries[key] = true;
+      });
+    });
   }
 }
 
 class _OrderData {
   _OrderData(this.index, this.price, this.quantity, this.size);
+
   final int index;
   final double price;
   final double quantity;
