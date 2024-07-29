@@ -1,15 +1,16 @@
-import 'package:intl/intl.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jessica/services/providers.dart';
 import 'package:jessica/widgets/general_card.dart';
 
-class GeneralParamsPage extends StatelessWidget {
-  final Map<String, dynamic> data;
+class GeneralParamsPage extends ConsumerWidget {
   Map<String, dynamic> globalParamsData = {};
 
-  GeneralParamsPage({required this.data});
+  GeneralParamsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final data = ref.watch(dataServiceProvider);
     try {
       globalParamsData = data["general"];
     } catch (e) {
@@ -33,7 +34,7 @@ class GeneralParamsPage extends StatelessWidget {
                 crossAxisSpacing: 16.0, // Horizontal spacing between grid items
                 mainAxisSpacing: 16.0, // Vertical spacing between grid items
                 childAspectRatio:
-                    7 / 4, // Ratio of width to height for each grid item
+                    6 / 4, // Ratio of width to height for each grid item
               ),
               itemCount: globalParamsData.length,
               itemBuilder: (context, index) {

@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jessica/services/providers.dart';
 import 'package:jessica/widgets/unique_item.dart';
 
-class UniqueParamsPage extends StatelessWidget {
-  final Map<String, dynamic> data;
-
-  UniqueParamsPage({required this.data});
+class UniqueParamsPage extends ConsumerWidget {
+  const UniqueParamsPage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final data = ref.watch(dataServiceProvider);
     Map<String, dynamic> uniqueParamsData = {};
     try {
       uniqueParamsData = data["unique"];

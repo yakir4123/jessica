@@ -5,10 +5,10 @@ class GeneralCard extends StatelessWidget {
   final String subtitle;
 
   const GeneralCard({
-    Key? key,
+    super.key,
     required this.title,
     required this.subtitle,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +30,7 @@ class GeneralCard extends StatelessWidget {
                     color: Theme.of(context).colorScheme.onSecondaryContainer,
                   ),
             ),
-            SizedBox(height: 8.0), // Spacing between title and subtitle
+            const SizedBox(height: 8.0),
             Text(
               subtitle,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
