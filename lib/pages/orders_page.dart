@@ -15,11 +15,11 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
 
   // Define the color map for each key
   final Map<String, Color> _colorMap = {
-    "buy-orders": Colors.yellow,
-    "sell-orders": Colors.green,
-    "take-profit-orders": Colors.blue,
-    "stop-loss-orders": Colors.orange,
-    "average-entry": Colors.red,
+    "buy-orders": Colors.orange,
+    "sell-orders": Colors.yellow,
+    "take-profit-orders": Colors.green,
+    "stop-loss-orders": Colors.red,
+    "average-entry": Colors.blue,
   };
 
   @override

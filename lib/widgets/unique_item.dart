@@ -22,6 +22,7 @@ class UniqueItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (hasChildren) {
+      List<Widget> children = _buildChildren(context, value, level, parentIndices);
       return Container(
         margin: EdgeInsets.only(left: level * 16.0),
         child: Theme(
@@ -35,11 +36,15 @@ class UniqueItem extends StatelessWidget {
               keyText.isNotEmpty ? keyText : value.toString(),
               style: Theme.of(context).expansionTileTitle,
             ),
+            trailing: Text(
+              '${children.length}', // Display the number of items
+              style: Theme.of(context).expansionTileTitle,
+            ),
             backgroundColor: Theme.of(context).colorScheme.primary,
             collapsedIconColor:
                 Theme.of(context).colorScheme.onSecondaryContainer,
             iconColor: Theme.of(context).colorScheme.onSecondaryContainer,
-            children: _buildChildren(context, value, level, parentIndices),
+            children: children,
           ),
         ),
       );

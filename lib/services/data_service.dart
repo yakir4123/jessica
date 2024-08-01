@@ -6,7 +6,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 class DataService extends StateNotifier<Map<String, dynamic>> {
   final WebSocketChannel _channel;
   Map<String, dynamic> decodedMessage = {};
-  String selectedKey = "LiveStrategy:Binance Perpetual Futures:SOL-USDT:15m";
+  String selectedKey = "LiveStrategy:Binance Perpetual Futures:AVAX-USDT";
 
   DataService()
       : _channel = WebSocketChannel.connect(

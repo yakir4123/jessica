@@ -19,7 +19,8 @@ class GeneralParamsPage extends ConsumerWidget {
         "update-time": 0,
         "today-pnl": 0,
         "balance": 0,
-        "available-margin": 0
+        "available-margin": 0,
+        "pnl": 0
       };
     }
 
@@ -52,31 +53,9 @@ class GeneralParamsPage extends ConsumerWidget {
   }
 
   String formatItem(String key) {
-    List<String> validKeys = [
-      'update-time',
-      'today-pnl',
-      'balance',
-      'available-margin',
-    ];
-    if (!validKeys.contains(key)) {
-      return "";
+    if (key == "update-time"){
+      return DateTime.fromMillisecondsSinceEpoch(globalParamsData["update-time"]).toString();
     }
-    DateTime updateTime =
-        DateTime.fromMillisecondsSinceEpoch(globalParamsData["update-time"]);
-
-    // Format the numbers with one decimal place
-    String todayPnl = globalParamsData['today-pnl'].toStringAsFixed(1);
-    String balance = globalParamsData['balance'].toStringAsFixed(1);
-    String availableMargin =
-        globalParamsData['available-margin'].toStringAsFixed(1);
-
-    // Create the response map
-    Map<String, String> resp = {
-      'update-time': updateTime.toString(),
-      'today-pnl': todayPnl,
-      'balance': balance,
-      'available-margin': availableMargin,
-    };
-    return resp[key]!;
+    return globalParamsData[key].toStringAsFixed(1);
   }
 }
