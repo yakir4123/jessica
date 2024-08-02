@@ -71,55 +71,92 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
         if (order["price"] > maxY) maxY = order["price"];
       }
 
-      series.add(BubbleSeries<_OrderData, num>(
-        dataSource: orderData,
-        xValueMapper: (_OrderData order, _) => order.index,
-        yValueMapper: (_OrderData order, _) => order.price,
-        sizeValueMapper: (_OrderData order, _) => order.size,
-        color: _colorMap[key] ??
-            Colors.grey, // Use color from the map or default to grey
-        name: key,
-        markerSettings: MarkerSettings(
-          isVisible: true,
+      if (orderData.isNotEmpty) {
+        series.add(BubbleSeries<_OrderData, num>(
+          dataSource: orderData,
+          xValueMapper: (_OrderData order, _) => order.index,
+          yValueMapper: (_OrderData order, _) => order.price,
+          sizeValueMapper: (_OrderData order, _) => order.size,
           color: _colorMap[key] ??
               Colors.grey, // Use color from the map or default to grey
-        ),
-        onPointTap: (ChartPointDetails point) {
-          _showOrderDetails(context, point.pointIndex ?? 0,
-              point.seriesIndex ?? 0, orderData, key);
-        },
-      ));
+          name: key,
+          markerSettings: MarkerSettings(
+            isVisible: true,
+            color: _colorMap[key] ??
+                Colors.grey, // Use color from the map or default to grey
+          ),
+          onPointTap: (ChartPointDetails point) {
+            _showOrderDetails(context, point.pointIndex ?? 0,
+                point.seriesIndex ?? 0, orderData, key);
+          },
+        ));
 
-      seriesIndex++;
+        seriesIndex++;
+      }
     });
+
+    if (series.isEmpty) {
+      return Column(
+        children: [
+          const Expanded(
+            child: Center(
+              child: Text('Nothing to see'),
+            ),
+          ),
+          Wrap(
+            alignment: WrapAlignment.center,
+            children: ordersData.keys
+                .where((key) => key != 'current-price')
+                .map((key) => Padding(
+                      padding: const EdgeInsets.all(4.0),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          minimumSize: const Size(
+                              50, 30), // Reduce the size of the buttons
+                          backgroundColor: _selectedSeries[key] == false
+                              ? Colors.grey
+                              : _colorMap[key] ?? Colors.grey,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _selectedSeries[key] =
+                                !(_selectedSeries[key] ?? true);
+                          });
+                        },
+                        child: Text(
+                            key.replaceAll("-", " ").replaceAll("orders", "")),
+                      ),
+                    ))
+                .toList(),
+          ),
+        ],
+      );
+    }
 
     return Column(
       children: [
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(5.0),
-            child: series.isNotEmpty
-                ? SfCartesianChart(
-                    tooltipBehavior: TooltipBehavior(enable: false),
-                    series: series,
-                    primaryXAxis: NumericAxis(
-                      minimum:
-                          minX - 1, // Start a little before the first point
-                      maximum: maxX + 1, // End a little after the last point
-                    ),
-                    primaryYAxis: NumericAxis(
-                      labelFormat: '{value}',
-                      minimum: minY - (0.1 * (maxY - minY)),
-                      // Start a little below the lowest point
-                      maximum: maxY +
-                          (0.1 *
-                              (maxY -
-                                  minY)), // End a little above the highest point
-                    ),
-                  )
-                : const Center(
-                    child: Text('Nothing to see'),
-                  ),
+            child: SfCartesianChart(
+              tooltipBehavior: TooltipBehavior(enable: false),
+              series: series,
+              primaryXAxis: NumericAxis(
+                minimum: minX.isFinite
+                    ? minX - 1
+                    : 0, // Start a little before the first point
+                maximum: maxX.isFinite
+                    ? maxX + 1
+                    : 1, // End a little after the last point
+              ),
+              primaryYAxis: NumericAxis(
+                labelFormat: '{value}',
+                minimum: minY.isFinite ? minY - (0.1 * (maxY - minY)) : 0,
+                // Start a little below the lowest point
+                maximum: maxY.isFinite ? maxY + (0.1 * (maxY - minY)) : 1,
+                // End a little above the highest point
+              ),
+            ),
           ),
         ),
         Wrap(
