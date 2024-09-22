@@ -20,6 +20,7 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
     "take-profit-orders": Colors.green,
     "stop-loss-orders": Colors.red,
     "average-entry": Colors.blue,
+    "current-price": Colors.white,
   };
 
   @override
@@ -47,14 +48,18 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
     double maxY = double.negativeInfinity;
 
     ordersData.forEach((key, value) {
-      if (key == 'current-price') return;
-
       if (_selectedSeries[key] == false) {
         return; // Skip if the series is not selected
       }
-
       List<_OrderData> orderData = [];
-      List<dynamic> orderList = List<dynamic>.from(value);
+      late List<dynamic> orderList;
+      if (key == 'current-price') {
+        orderList = List<dynamic>.from([
+          {"price": value, "qty": 1, "dollars": 1}
+        ]);
+      } else {
+        orderList = List<dynamic>.from(value);
+      }
 
       double medianSize = _calculateMedianSize(orderList, key);
       double baseSize = 15.0;
@@ -62,7 +67,8 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
       for (int i = 0; i < orderList.length; i++) {
         var order = orderList[i];
         double size = (order["qty"] / medianSize) * baseSize;
-        orderData.add(_OrderData(i + 1, order["price"], order["qty"], size));
+        orderData.add(_OrderData(i + 1, order["price"].toDouble(),
+            order["qty"].toDouble(), size.toDouble()));
 
         // Update min/max for axis range adjustments
         if (i + 1 < minX) minX = i + 1;
@@ -77,8 +83,8 @@ class _OrdersPageState extends ConsumerState<OrdersPage> {
           xValueMapper: (_OrderData order, _) => order.index,
           yValueMapper: (_OrderData order, _) => order.price,
           sizeValueMapper: (_OrderData order, _) => order.size,
-          color: _colorMap[key] ??
-              Colors.grey, // Use color from the map or default to grey
+          color: _colorMap[key] ?? Colors.grey,
+          // Use color from the map or default to grey
           name: key,
           markerSettings: MarkerSettings(
             isVisible: true,
