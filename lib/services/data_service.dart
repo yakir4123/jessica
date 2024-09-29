@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:jessica/mock_data.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class DataService extends StateNotifier<Map<String, dynamic>>
@@ -20,7 +19,7 @@ class DataService extends StateNotifier<Map<String, dynamic>>
     try {
       _channel = WebSocketChannel.connect(
         Uri.parse(
-            "ws://${dotenv.env["JESSE_SERVER_IP"]}:${dotenv.env["JESSE_SERVER_PORT"]}/ws"),
+            "ws://${dotenv.env["JESSE_SERVER_IP"]}:${dotenv.env["JESSE_SERVER_PORT"]}/minutely_updates"),
       );
 
       print('WebSocket stream started');
@@ -42,7 +41,7 @@ class DataService extends StateNotifier<Map<String, dynamic>>
         },
       );
     } catch (_) {
-      state = mockData;
+
     }
   }
 

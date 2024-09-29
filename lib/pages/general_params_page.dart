@@ -54,7 +54,7 @@ class GeneralParamsPage extends ConsumerWidget {
 
   String formatItem(String key) {
     if (key == "update-time"){
-      return DateTime.fromMillisecondsSinceEpoch(globalParamsData["update-time"]).toString();
+      return DateTime.fromMillisecondsSinceEpoch(globalParamsData["update-time"].toInt()).toString();
     }
     return globalParamsData[key].toStringAsFixed(1);
   }
