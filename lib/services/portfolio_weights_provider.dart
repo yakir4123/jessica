@@ -8,7 +8,7 @@ class PortfolioWeightsService {
   final String _baseUrl =
       "http://${dotenv.env["JESSE_SERVER_IP"]}:${dotenv.env["JESSE_SERVER_PORT"]}";
 
-  Future<Map<String, dynamic>> fetchPortfolioWeights() async {
+  Future<Map<num, Map<String, dynamic>>> fetchPortfolioWeights() async {
     final String url = '$_baseUrl/portfolio-weights';
 
     try {
@@ -16,7 +16,10 @@ class PortfolioWeightsService {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = json.decode(response.body);
-        return data;
+        final Map<num, Map<String, dynamic>> portfolioAllocationSeries = {
+          for (var key in data.keys) double.parse(key): data[key]
+        };
+        return portfolioAllocationSeries;
       } else {
         print(
             'Failed to load portfolio weights. Status code: ${response.statusCode}');
@@ -28,7 +31,19 @@ class PortfolioWeightsService {
     }
   }
 
-  static Map<String, num> preProcess(Map<String, dynamic> df) {
+  static Map<String, dynamic> getLatestAllocation(Map<num, Map<String, dynamic>> seriesDf) {
+    if (seriesDf.isEmpty) return {};
+      num highestKey = seriesDf.keys.reduce((a, b) => a > b ? a : b);
+      return seriesDf[highestKey] ?? {};
+  }
+
+  static Map<num,  Map<String, dynamic>> preProcessStrategyAllocationSeries(Map<num, Map<String, dynamic>> seriesDf) {
+    return seriesDf.map((key, value) {
+      return MapEntry(key, preProcessStrategyAllocation(value));
+    });
+  }
+
+  static Map<String, num> preProcessStrategyAllocation(Map<String, dynamic> df) {
     Set<String> symbols = df.keys
         .map((k) {
           List<String> parts = k.split('--');
@@ -64,7 +79,7 @@ final portfolioWeightsServiceProvider =
 
 // Create a FutureProvider for fetching portfolio weights
 final portfolioWeightsProvider =
-    FutureProvider<Map<String, dynamic>>((ref) async {
+    FutureProvider<Map<num, Map<String, dynamic>>>((ref) async {
   final service = ref.watch(portfolioWeightsServiceProvider);
   return await service.fetchPortfolioWeights();
 });

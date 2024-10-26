@@ -1,9 +1,10 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
+import 'package:jessica/services/portfolio_weights_provider.dart';
 
 class PortfolioChartWidget extends StatelessWidget {
-  final Map<String, num> symbolize_df;
+  final Map<num, Map<String, dynamic>> symbolize_df;
 
   PortfolioChartWidget({required this.symbolize_df});
 
@@ -17,6 +18,30 @@ class PortfolioChartWidget extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Pie Chart
+          Expanded(
+            child: SfCircularChart(
+              legend: Legend(
+                isVisible: true,
+                position: LegendPosition.bottom,
+                textStyle: const TextStyle(color: Colors.white),
+                overflowMode: LegendItemOverflowMode.wrap,
+              ),
+              series: <CircularSeries>[
+                PieSeries<_PieData, String>(
+                  dataSource: pieChartData,
+                  xValueMapper: (_PieData data, _) => data.category,
+                  yValueMapper: (_PieData data, _) => data.value,
+
+                  pointColorMapper: (_PieData data, _) =>
+                      _getRandomColor(), // Random color for each pie slice
+                ),
+              ],
+              tooltipBehavior:
+              TooltipBehavior(enable: true), // Tooltip on hover
+            ),
+          ),
+          const SizedBox(height: 16.0), // Spacing between charts
           // Stacked Area Chart
           SfCartesianChart(
             legend: Legend(isVisible: true, position: LegendPosition.bottom),
@@ -43,51 +68,28 @@ class PortfolioChartWidget extends StatelessWidget {
             ],
             tooltipBehavior: TooltipBehavior(enable: true), // Tooltip on hover
           ),
-          const SizedBox(height: 16.0), // Spacing between charts
-          // Pie Chart
-          Expanded(
-            child: SfCircularChart(
-              legend: Legend(
-                isVisible: true,
-                position: LegendPosition.bottom,
-                textStyle: const TextStyle(color: Colors.white),
-                overflowMode: LegendItemOverflowMode.wrap,
-              ),
-              series: <CircularSeries>[
-                PieSeries<_PieData, String>(
-                  dataSource: pieChartData,
-                  xValueMapper: (_PieData data, _) => data.category,
-                  yValueMapper: (_PieData data, _) => data.value,
-
-                  pointColorMapper: (_PieData data, _) =>
-                      _getRandomColor(), // Random color for each pie slice
-                ),
-              ],
-              tooltipBehavior:
-                  TooltipBehavior(enable: true), // Tooltip on hover
-            ),
-          ),
         ],
       ),
     );
   }
 
   // Generate line chart data from symbolize_df
-  List<_ChartData> _generateLineChartData(Map<String, num> data) {
+  List<_ChartData> _generateLineChartData(Map<num, Map<String, dynamic>> data) {
     List<_ChartData> chartData = [];
-    int index = 0;
-    for (var entry in data.entries) {
-      chartData.add(_ChartData(index.toDouble(), entry.value.toDouble(),
-          entry.value.toDouble() * 0.9)); // Simulate y2 as 90% of y
-      index++;
-    }
+    // int index = 0;
+    // for (var entry in data.entries) {
+    //   chartData.add(_ChartData(index.toDouble(), entry.value.toDouble(),
+    //       entry.value.toDouble() * 0.9)); // Simulate y2 as 90% of y
+    //   index++;
+    // }
     return chartData;
   }
 
   // Generate pie chart data from symbolize_df
-  List<_PieData> _generatePieChartData(Map<String, num> data) {
+  List<_PieData> _generatePieChartData(Map<num, Map<String, dynamic>> allocationSeries) {
     List<_PieData> pieData = [];
-    for (var entry in data.entries) {
+    Map<String, dynamic> latestAllocation = PortfolioWeightsService.getLatestAllocation(allocationSeries);
+    for (var entry in latestAllocation.entries) {
       pieData.add(_PieData(entry.key, entry.value.toDouble()));
     }
     return pieData;

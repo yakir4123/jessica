@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jessica/models/minutly_updates.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class DataService extends StateNotifier<Map<String, dynamic>>
@@ -27,7 +28,8 @@ class DataService extends StateNotifier<Map<String, dynamic>>
         (message) {
           final decodedMessage = json.decode(message) as Map<String, dynamic>;
           this.decodedMessage = decodedMessage;
-          if (decodedMessage.containsKey(selectedKey)) {
+          if (decodedMessage.length > 0) {
+            print(MinutelyOutputModel.fromJson(message));
             state = Map<String, dynamic>.from(decodedMessage[selectedKey]);
           } else {
             state = {};

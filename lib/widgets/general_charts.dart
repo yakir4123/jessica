@@ -9,9 +9,11 @@ class GeneralCharts extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final portfolioAsyncValue = ref.watch(portfolioWeightsProvider);
-    return portfolioAsyncValue.when(data: (Map<String, dynamic> data) {
-      Map<String, num> symbolize_df = PortfolioWeightsService.preProcess(data);
-      return PortfolioChartWidget(symbolize_df: symbolize_df);
+    return portfolioAsyncValue.when(
+        data: (Map<num, Map<String, dynamic>> data) {
+      Map<num, Map<String, dynamic>> symbolizeDf =
+          PortfolioWeightsService.preProcessStrategyAllocationSeries(data);
+      return PortfolioChartWidget(symbolize_df: symbolizeDf);
     }, error: (Object error, StackTrace stackTrace) {
       return Center(child: Text('Error: $error'));
     }, loading: () {
