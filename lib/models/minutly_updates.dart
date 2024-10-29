@@ -4,9 +4,16 @@ part 'minutly_updates.g.dart';
 
 @JsonSerializable()
 class BotStateModel {
+  @JsonKey(name: 'balance')
   final double balance;
+
+  @JsonKey(name: 'today_pnl')
   final double todayPnl;
+
+  @JsonKey(name: 'update_time')
   final double updateTime;
+
+  @JsonKey(name: 'available_margin')
   final double availableMargin;
 
   BotStateModel({
@@ -16,107 +23,112 @@ class BotStateModel {
     required this.availableMargin,
   });
 
-  factory BotStateModel.fromJson(Map<String, dynamic> json) => _$BotStateModelFromJson(json);
+  factory BotStateModel.fromJson(Map<String, dynamic> json) =>
+      _$BotStateModelFromJson(json);
+
   Map<String, dynamic> toJson() => _$BotStateModelToJson(this);
 }
 
 enum AlignState {
-  ALIGN,
-  MISS_IN_STRATEGIES,
-  MISS_IN_ORDER_BOOK,
+  align,
+  miss_in_strategies,
+  miss_in_order_book,
 }
 
 @JsonSerializable()
 class StrategyOrderModel {
+  @JsonKey(name: 'strategy_id')
   final String strategyId;
+
+  @JsonKey(name: 'qty')
   final double qty;
+
+  @JsonKey(name: 'ratio_qty')
   final double ratioQty;
+
+  @JsonKey(name: 'price')
   final double price;
-  final double expire;
+
+  @JsonKey(name: 'timestamp')
+  final double timestamp;
+
+  @JsonKey(name: 'is_mimic')
   final bool isMimic;
+
+  @JsonKey(name: 'align_state')
   final AlignState alignState;
+
+  @JsonKey(name: 'type')
+  final OrderType type;
+
+  @JsonKey(name: 'is_executed')
+  final bool isExecuted;
 
   StrategyOrderModel({
     required this.strategyId,
     required this.qty,
     required this.ratioQty,
     required this.price,
-    required this.expire,
+    required this.timestamp,
     required this.isMimic,
     required this.alignState,
+    required this.type,
+    required this.isExecuted,
   });
 
-  factory StrategyOrderModel.fromJson(Map<String, dynamic> json) => _$StrategyOrderModelFromJson(json);
+  factory StrategyOrderModel.fromJson(Map<String, dynamic> json) =>
+      _$StrategyOrderModelFromJson(json);
+
   Map<String, dynamic> toJson() => _$StrategyOrderModelToJson(this);
 }
 
 @JsonSerializable()
-class AverageEntryModel {
-  final String strategyId;
-  final double qty;
-  final double ratioQty;
-  final double price;
-  final bool isMimic;
-  final String side;
-  final String type;
-  final double timestamp;
-
-  AverageEntryModel({
-    required this.strategyId,
-    required this.qty,
-    required this.ratioQty,
-    required this.price,
-    required this.isMimic,
-    required this.side,
-    required this.type,
-    required this.timestamp,
-  });
-
-  factory AverageEntryModel.fromJson(Map<String, dynamic> json) => _$AverageEntryModelFromJson(json);
-  Map<String, dynamic> toJson() => _$AverageEntryModelToJson(this);
-}
-
-@JsonSerializable()
 class RouteOrdersModel {
-  final List<StrategyOrderModel> buy;
-  final List<StrategyOrderModel> sell;
-  final List<StrategyOrderModel> takeProfit;
-  final List<StrategyOrderModel> stopLoss;
-  final List<AverageEntryModel> averageEntry;
+  @JsonKey(name: 'orders')
+  final List<StrategyOrderModel> orders;
+
+  @JsonKey(name: 'current_price')
   final double currentPrice;
 
   RouteOrdersModel({
-    this.buy = const [],
-    this.sell = const [],
-    this.takeProfit = const [],
-    this.stopLoss = const [],
-    this.averageEntry = const [],
+    this.orders = const [],
     required this.currentPrice,
   });
 
-  factory RouteOrdersModel.fromJson(Map<String, dynamic> json) => _$RouteOrdersModelFromJson(json);
+  factory RouteOrdersModel.fromJson(Map<String, dynamic> json) =>
+      _$RouteOrdersModelFromJson(json);
+
   Map<String, dynamic> toJson() => _$RouteOrdersModelToJson(this);
 }
 
 enum PositionSide {
-  NONE,
-  LONG,
-  SHORT,
+  none,
+  long,
+  short,
 }
 
 enum OrderType {
-  BUY,
-  SELL,
-  TAKE_PROFIT,
-  STOP_LOSS,
+  buy,
+  sell,
+  take_profit,
+  stop_loss,
 }
 
 @JsonSerializable()
 class RouteStateModel {
+  @JsonKey(name: 'pnl')
   final double pnl;
+
+  @JsonKey(name: 'price')
   final double price;
+
+  @JsonKey(name: 'side')
   final PositionSide side;
+
+  @JsonKey(name: 'position_qty')
   final double positionQty;
+
+  @JsonKey(name: 'position_avg_price')
   final double positionAvgPrice;
 
   RouteStateModel({
@@ -127,13 +139,18 @@ class RouteStateModel {
     required this.positionAvgPrice,
   });
 
-  factory RouteStateModel.fromJson(Map<String, dynamic> json) => _$RouteStateModelFromJson(json);
+  factory RouteStateModel.fromJson(Map<String, dynamic> json) =>
+      _$RouteStateModelFromJson(json);
+
   Map<String, dynamic> toJson() => _$RouteStateModelToJson(this);
 }
 
 @JsonSerializable()
 class OrderModel {
+  @JsonKey(name: 'qty')
   final double qty;
+
+  @JsonKey(name: 'price')
   final double price;
 
   OrderModel({
@@ -141,7 +158,9 @@ class OrderModel {
     required this.price,
   });
 
-  factory OrderModel.fromJson(Map<String, dynamic> json) => _$OrderModelFromJson(json);
+  factory OrderModel.fromJson(Map<String, dynamic> json) =>
+      _$OrderModelFromJson(json);
+
   Map<String, dynamic> toJson() => _$OrderModelToJson(this);
 }
 
@@ -150,9 +169,16 @@ typedef OrdersListModel = List<OrderModel>;
 
 @JsonSerializable()
 class MiniStrategyPositionModel {
+  @JsonKey(name: 'all_orders')
   final List<OrderModel> allOrders;
+
+  @JsonKey(name: 'liquidate')
   final bool liquidate;
+
+  @JsonKey(name: 'equity')
   final double equity;
+
+  @JsonKey(name: 'in_position_ratio')
   final double inPositionRatio;
 
   MiniStrategyPositionModel({
@@ -162,19 +188,33 @@ class MiniStrategyPositionModel {
     required this.inPositionRatio,
   });
 
-  factory MiniStrategyPositionModel.fromJson(Map<String, dynamic> json) => _$MiniStrategyPositionModelFromJson(json);
+  factory MiniStrategyPositionModel.fromJson(Map<String, dynamic> json) =>
+      _$MiniStrategyPositionModelFromJson(json);
+
   Map<String, dynamic> toJson() => _$MiniStrategyPositionModelToJson(this);
 }
 
-
 @JsonSerializable()
 class MiniStrategyParamsModel {
+  @JsonKey(name: 'buy')
   final OrdersListModel buy;
+
+  @JsonKey(name: 'sell')
   final OrdersListModel sell;
+
+  @JsonKey(name: 'take_profit')
   final OrdersListModel takeProfit;
+
+  @JsonKey(name: 'stop_loss')
   final OrdersListModel stopLoss;
+
+  @JsonKey(name: 'position')
   final MiniStrategyPositionModel position;
+
+  @JsonKey(name: 'expiration')
   final double expiration;
+
+  @JsonKey(name: 'entry_expiration')
   final double entryExpiration;
 
   MiniStrategyParamsModel({
@@ -187,18 +227,33 @@ class MiniStrategyParamsModel {
     this.entryExpiration = double.infinity,
   });
 
-  factory MiniStrategyParamsModel.fromJson(Map<String, dynamic> json) => _$MiniStrategyParamsModelFromJson(json);
+  factory MiniStrategyParamsModel.fromJson(Map<String, dynamic> json) =>
+      _$MiniStrategyParamsModelFromJson(json);
+
   Map<String, dynamic> toJson() => _$MiniStrategyParamsModelToJson(this);
 }
 
 @JsonSerializable()
 class OrderBookParamsEntryModel {
+  @JsonKey(name: 'strategy_id')
   final String strategyId;
+
+  @JsonKey(name: 'type')
   final OrderType type;
+
+  @JsonKey(name: 'position')
   final PositionSide position;
+
+  @JsonKey(name: 'price')
   final double price;
+
+  @JsonKey(name: 'ratio_qty')
   final double ratioQty;
+
+  @JsonKey(name: 'qty')
   final double qty;
+
+  @JsonKey(name: 'is_mimic')
   final bool isMimic;
 
   OrderBookParamsEntryModel({
@@ -211,7 +266,9 @@ class OrderBookParamsEntryModel {
     required this.isMimic,
   });
 
-  factory OrderBookParamsEntryModel.fromJson(Map<String, dynamic> json) => _$OrderBookParamsEntryModelFromJson(json);
+  factory OrderBookParamsEntryModel.fromJson(Map<String, dynamic> json) =>
+      _$OrderBookParamsEntryModelFromJson(json);
+
   Map<String, dynamic> toJson() => _$OrderBookParamsEntryModelToJson(this);
 }
 
@@ -220,12 +277,25 @@ typedef OrderBookParamsModel = List<OrderBookParamsEntryModel>;
 
 @JsonSerializable()
 class BalanceAllocationEntryModel {
+  @JsonKey(name: 'qty_allocation')
   final double qtyAllocation;
+
+  @JsonKey(name: 'available_margin')
   final double availableMargin;
+
+  @JsonKey(name: 'dollar_allocation')
   final double dollarAllocation;
+
+  @JsonKey(name: 'allocation_timestamp')
   final double allocationTimestamp;
+
+  @JsonKey(name: 'free_allocation')
   final double freeAllocation;
+
+  @JsonKey(name: 'reserved_allocation')
   final double reservedAllocation;
+
+  @JsonKey(name: 'used_allocated')
   final double usedAllocated;
 
   BalanceAllocationEntryModel({
@@ -238,13 +308,18 @@ class BalanceAllocationEntryModel {
     required this.usedAllocated,
   });
 
-  factory BalanceAllocationEntryModel.fromJson(Map<String, dynamic> json) => _$BalanceAllocationEntryModelFromJson(json);
+  factory BalanceAllocationEntryModel.fromJson(Map<String, dynamic> json) =>
+      _$BalanceAllocationEntryModelFromJson(json);
+
   Map<String, dynamic> toJson() => _$BalanceAllocationEntryModelToJson(this);
 }
 
 @JsonSerializable()
 class BalanceAllocationModel {
+  @JsonKey(name: 'allocations')
   final Map<String, BalanceAllocationEntryModel> allocations;
+
+  @JsonKey(name: 'base_risk')
   final double baseRisk;
 
   BalanceAllocationModel({
@@ -252,17 +327,30 @@ class BalanceAllocationModel {
     required this.baseRisk,
   });
 
-  factory BalanceAllocationModel.fromJson(Map<String, dynamic> json) => _$BalanceAllocationModelFromJson(json);
+  factory BalanceAllocationModel.fromJson(Map<String, dynamic> json) =>
+      _$BalanceAllocationModelFromJson(json);
+
   Map<String, dynamic> toJson() => _$BalanceAllocationModelToJson(this);
 }
 
 @JsonSerializable()
 class SchedulerParamsModel {
+  @JsonKey(name: 'risk_margin')
   final double riskMargin;
+
+  @JsonKey(name: 'qty_precision')
   final int qtyPrecision;
+
+  @JsonKey(name: 'price_precision')
   final int pricePrecision;
-  final List<OrderBookParamsEntryModel> ordersBook; // OrderBookParamsModel as a list
+
+  @JsonKey(name: 'orders_book')
+  final List<OrderBookParamsEntryModel> ordersBook;
+
+  @JsonKey(name: 'balance_allocator')
   final BalanceAllocationModel balanceAllocator;
+
+  @JsonKey(name: 'strategies')
   final Map<String, MiniStrategyParamsModel> strategies;
 
   SchedulerParamsModel({
@@ -274,17 +362,30 @@ class SchedulerParamsModel {
     required this.strategies,
   });
 
-  factory SchedulerParamsModel.fromJson(Map<String, dynamic> json) => _$SchedulerParamsModelFromJson(json);
+  factory SchedulerParamsModel.fromJson(Map<String, dynamic> json) =>
+      _$SchedulerParamsModelFromJson(json);
+
   Map<String, dynamic> toJson() => _$SchedulerParamsModelToJson(this);
 }
 
 @JsonSerializable()
 class RouteWithOrdersModel {
+  @JsonKey(name: 'strategy_name')
   final String strategyName;
+
+  @JsonKey(name: 'exchange')
   final String exchange;
+
+  @JsonKey(name: 'symbol')
   final String symbol;
+
+  @JsonKey(name: 'route_orders')
   final RouteOrdersModel routeOrders;
+
+  @JsonKey(name: 'route_params')
   final RouteStateModel routeParams;
+
+  @JsonKey(name: 'scheduler_params')
   final SchedulerParamsModel schedulerParams;
 
   RouteWithOrdersModel({
@@ -296,13 +397,18 @@ class RouteWithOrdersModel {
     required this.schedulerParams,
   });
 
-  factory RouteWithOrdersModel.fromJson(Map<String, dynamic> json) => _$RouteWithOrdersModelFromJson(json);
+  factory RouteWithOrdersModel.fromJson(Map<String, dynamic> json) =>
+      _$RouteWithOrdersModelFromJson(json);
+
   Map<String, dynamic> toJson() => _$RouteWithOrdersModelToJson(this);
 }
 
 @JsonSerializable()
 class MinutelyOutputModel {
+  @JsonKey(name: 'bot_params')
   final BotStateModel botParams;
+
+  @JsonKey(name: 'routes_params')
   final List<RouteWithOrdersModel> routesParams;
 
   MinutelyOutputModel({
@@ -310,6 +416,8 @@ class MinutelyOutputModel {
     required this.routesParams,
   });
 
-  factory MinutelyOutputModel.fromJson(Map<String, dynamic> json) => _$MinutelyOutputModelFromJson(json);
+  factory MinutelyOutputModel.fromJson(Map<String, dynamic> json) =>
+      _$MinutelyOutputModelFromJson(json);
+
   Map<String, dynamic> toJson() => _$MinutelyOutputModelToJson(this);
 }

@@ -1,29 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jessica/services/providers.dart';
 import 'package:jessica/widgets/general_card.dart';
 import 'package:jessica/widgets/general_charts.dart';
+import 'package:jessica/models/minutly_updates.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class GeneralParamsPage extends ConsumerWidget {
-  Map<String, dynamic> globalParamsData = {};
-
   GeneralParamsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final data = ref.watch(dataServiceProvider);
-    try {
-      globalParamsData = data["general"];
-    } catch (e) {
-      // Handle error if needed
-      globalParamsData = {
-        "update-time": 0,
-        "today-pnl": 0,
-        "balance": 0,
-        "available-margin": 0,
-        "pnl": 0
-      };
-    }
+    final MinutelyOutputModel? data = ref.watch(dataServiceProvider);
+
+    final botStateModel = data?.botParams ??
+        BotStateModel(
+          balance: 0.0,
+          todayPnl: 0.0,
+          updateTime: 0,
+          availableMargin: 0.0,
+        );
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -48,89 +43,22 @@ class GeneralParamsPage extends ConsumerWidget {
                   children: [
                     GeneralCard(
                       title: "update-time",
-                      subtitle: formatItem("update-time"),
+                      subtitle: DateTime.fromMillisecondsSinceEpoch(
+                              botStateModel.updateTime.toInt())
+                          .toString(),
                     ),
-                    Card(
-                      elevation: 4, // Adds shadow to the card
-                      shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(8.0), // Rounded corners
-                      ),
-                      margin: EdgeInsets.zero, // Remove margin from card
-                      child: Padding(
-                        padding: const EdgeInsets.all(
-                            12.0), // Padding inside the card
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "today-pnl",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSecondaryContainer,
-                                      ),
-                                ),
-                                Text(
-                                  formatItem("today-pnl"),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleSmall
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSecondaryContainer,
-                                      ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8.0),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  "pnl",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSecondaryContainer,
-                                      ),
-                                ),
-                                Text(
-                                  formatItem("pnl"),
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleSmall
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSecondaryContainer,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                    GeneralCard(
+                      title: "today-pnl",
+                      subtitle: botStateModel.todayPnl.toStringAsFixed(1),
                     ),
                     GeneralCard(
                       title: "balance",
-                      subtitle: formatItem("balance"),
+                      subtitle: botStateModel.balance.toStringAsFixed(1),
                     ),
                     GeneralCard(
                       title: "available-margin",
-                      subtitle: formatItem("available-margin"),
+                      subtitle:
+                          botStateModel.availableMargin.toStringAsFixed(1),
                     ),
                   ],
                 ),
@@ -141,14 +69,5 @@ class GeneralParamsPage extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  String formatItem(String key) {
-    if (key == "update-time") {
-      return DateTime.fromMillisecondsSinceEpoch(
-              globalParamsData["update-time"].toInt())
-          .toString();
-    }
-    return globalParamsData[key].toStringAsFixed(1);
   }
 }
