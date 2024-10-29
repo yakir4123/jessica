@@ -43,14 +43,16 @@ class OrdersPage extends ConsumerWidget {
                 route.symbol, // Display the title based on route.symbol
               ),
             ),
-            ordersPlotWidget(context, route, data.botParams.updateTime), // The plot widget
+            ordersPlotWidget(context, route, data.botParams.updateTime),
+            // The plot widget
           ],
         );
       }).toList(),
     );
   }
 
-  Widget ordersPlotWidget(BuildContext context, RouteWithOrdersModel route, double updateTime) {
+  Widget ordersPlotWidget(
+      BuildContext context, RouteWithOrdersModel route, double updateTime) {
     RouteOrdersModel routesOrders = route.routeOrders;
     List<StrategyOrderModel> sortedTOrders =
         routesOrders.orders.where((order) => order.timestamp != 0).toList();
@@ -58,52 +60,76 @@ class OrdersPage extends ConsumerWidget {
 
     // Find the minimum and maximum prices
     double minPrice = sortedTOrders.isNotEmpty
-        ? sortedTOrders.map((order) => order.price).reduce((a, b) => a < b ? a : b)
+        ? sortedTOrders
+            .map((order) => order.price)
+            .reduce((a, b) => a < b ? a : b)
         : 0.0;
     minPrice = min(routesOrders.currentPrice, minPrice);
     double maxPrice = sortedTOrders.isNotEmpty
-        ? sortedTOrders.map((order) => order.price).reduce((a, b) => a > b ? a : b)
+        ? sortedTOrders
+            .map((order) => order.price)
+            .reduce((a, b) => a > b ? a : b)
         : 1.0;
     maxPrice = max(routesOrders.currentPrice, maxPrice);
     minPrice = minPrice - 0.05 * (maxPrice - minPrice);
     maxPrice = maxPrice + 0.05 * (maxPrice - minPrice);
 
     List<IndexedOrder> indexedOrders =
-    sortedTOrders.asMap().entries.map((entry) {
+        sortedTOrders.asMap().entries.map((entry) {
       return IndexedOrder(entry.key, entry.value);
     }).toList();
+    List<ChartSeries<StrategyOrderModel, num>> series =
+        sortedTOrders.asMap().entries.map((entry) {
+      int index = entry.key;
+      StrategyOrderModel order = entry.value;
+      double size = _getSize(order.qty, order.price);
+      return ScatterSeries<StrategyOrderModel, num>(
+          dataSource: [order],
+          xValueMapper: (StrategyOrderModel o, _) => index,
+          yValueMapper: (StrategyOrderModel o, _) => o.price,
+          pointColorMapper: (StrategyOrderModel o, _) => _getColor(o),
+          markerSettings: MarkerSettings(
+            height: size,
+            width: size,
+          ),
+          onPointTap: (ChartPointDetails point) {
+            _showOrderDetails(context, order);
+          });
+    }).toList();
+
     int currTimestampIndex = 0;
     if (indexedOrders.isNotEmpty) {
       try {
-        currTimestampIndex = indexedOrders.firstWhere((entry) => entry.order.strategyId == 'route').index;
+        currTimestampIndex = indexedOrders
+            .firstWhere((entry) => entry.order.strategyId == 'route')
+            .index;
       } catch (e) {
         // in case there are only entry orders and its not in position
         currTimestampIndex = -1; // before index = 0
       }
     }
-    List<ChartSeries<ChartData, num>> series = [
-    BubbleSeries<ChartData, num>(
-        dataSource: [ChartData(currTimestampIndex, routesOrders.currentPrice, 1)],
-        xValueMapper: (ChartData cData, _) => cData.index,
-        yValueMapper: (ChartData cData, _) => cData.price,
-        sizeValueMapper: (ChartData cData, _) => cData.size,
-        color: (_colorMap["current_price"] ?? Colors.grey).withOpacity(0.33)
-    )
-    ];
-      for (var type in OrderType.values){
-        series.add(addBubbleSeries(indexedOrders, type, true, false, _colorMap["average_entry"] ?? Colors.grey));
-        for (var isMimic in [true, false]) {
-          series.add(addBubbleSeries(indexedOrders, type, false, isMimic,
-              _colorMap[type.name] ?? Colors.grey));
-        }
+    if (sortedTOrders.isNotEmpty) {
+      series.add(ScatterSeries<StrategyOrderModel, num>(
+        dataSource: [sortedTOrders[0]],
+        // fake an order for typing..
+        xValueMapper: (StrategyOrderModel o, _) => currTimestampIndex,
+        yValueMapper: (StrategyOrderModel o, _) => routesOrders.currentPrice,
+        pointColorMapper: (StrategyOrderModel o, _) => Colors.grey,
+        markerSettings: const MarkerSettings(
+          height: 10,
+          width: 10,
+        ),
+      ));
     }
 
     return SfCartesianChart(
-      tooltipBehavior: TooltipBehavior(enable: true),
+      tooltipBehavior: TooltipBehavior(enable: false),
       series: series,
       primaryXAxis: NumericAxis(
         minimum: -1.5,
         maximum: sortedTOrders.length.toDouble(),
+        majorGridLines: const MajorGridLines(width: 0),
+        isVisible: false,
       ),
       primaryYAxis: NumericAxis(
         minimum: minPrice,
@@ -112,31 +138,32 @@ class OrdersPage extends ConsumerWidget {
     );
   }
 
+  Color _getColor(StrategyOrderModel order) {
+    double opacity = order.isMimic ? 1 : 0.5;
 
-  BubbleSeries<ChartData, num> addBubbleSeries(List<IndexedOrder> indexedOrders, OrderType type, bool isExecuted, bool isMimic, Color color) {
-    List<IndexedOrder> ordersOfType = indexedOrders
-        .where((entry) => entry.order.isExecuted == isExecuted && entry.order.type == type && entry.order.isMimic == isMimic)
-        .toList();
-    List<ChartData> dataPoints = ordersOfType.map((entry) => ChartData(entry.index, entry.order.price, entry.order.qty)).toList();
+    if (order.isExecuted) {
+      return Colors.blue.withOpacity(opacity);
+    }
 
-    return BubbleSeries<ChartData, num>(
-        dataSource: dataPoints,
-        xValueMapper: (ChartData cData, _) => cData.index,
-        yValueMapper: (ChartData cData, _) => cData.price,
-        sizeValueMapper: (ChartData cData, _) => cData.size,
-        color: color.withOpacity(isMimic ? 0.2 : 0.75)
-    );
+    switch (order.type) {
+      case OrderType.buy:
+        return Colors.orange.withOpacity(opacity);
+      case OrderType.sell:
+        return Colors.yellow.withOpacity(opacity);
+      case OrderType.take_profit:
+        return Colors.green.withOpacity(opacity);
+      case OrderType.stop_loss:
+        return Colors.red.withOpacity(opacity);
+      default:
+        return Colors.grey.withOpacity(opacity);
+    }
   }
 
-  Color bubbleColor(StrategyOrderModel orderModel) {
-    if (orderModel.isExecuted) {
-      return _colorMap["average_entry"]
-              ?.withOpacity(orderModel.isMimic ? 0.5 : 0.75) ??
-          Colors.blue;
-    }
-    return _colorMap[orderModel.type.name]
-            ?.withOpacity(orderModel.isMimic ? 0.5 : 0.75) ??
-        Colors.grey;
+  double _getSize(double qty, double price) {
+    double value = qty * price;
+    // scale dollar allocation (0 -> 25)
+    // scale dollar allocation (5000 -> 100)
+    return (value / 5000) * (100 - 15) + 15;
   }
 
   // ordersData.forEach((key, value) {
@@ -287,45 +314,39 @@ class OrdersPage extends ConsumerWidget {
   // );
   // }
 
-  // void _showOrderDetails(BuildContext context, int pointIndex, int seriesIndex,
-  //     List<_OrderData> orderData, String typeName) {
-  //   final order = orderData[pointIndex];
-  //   showDialog(
-  //     context: context,
-  //     builder: (BuildContext context) {
-  //       return AlertDialog(
-  //         title: Text(typeName),
-  //         content: Text(
-  //             'Index: ${order.x}\nPrice: ${order.y}\nQuantity: ${order.size}'),
-  //         actions: <Widget>[
-  //           TextButton(
-  //             child: Text(
-  //               'Close',
-  //               style:
-  //                   TextStyle(color: Theme.of(context).colorScheme.secondary),
-  //             ),
-  //             onPressed: () {
-  //               Navigator.of(context).pop();
-  //             },
-  //           ),
-  //         ],
-  //       );
-  //     },
-  //   );
-  // }
-
-  double _calculateMedianSize(List<dynamic> orderList, String key) {
-    if (key == 'buy') {
-      var sizes = orderList.map((order) => order["qty"]).toList();
-      sizes.sort();
-      int middle = sizes.length ~/ 2;
-      if (sizes.length % 2 == 0) {
-        return (sizes[middle - 1] + sizes[middle]) / 2.0;
-      } else {
-        return sizes[middle].toDouble();
-      }
-    }
-    return 1.0; // Default value if key is not 'buy'
+  void _showOrderDetails(BuildContext context, StrategyOrderModel order) {
+    String symbol = order.strategyId.split("--")[2];
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(symbol),
+          content: Text({
+            'Strategy': order.strategyId,
+            'qty': order.qty,
+            'ratioQty': order.ratioQty,
+            'price': order.price,
+            'timestamp': order.timestamp,
+            'isMimic': order.isMimic,
+            'alignState': order.alignState.name,
+            'type': order.type,
+            'isExecuted': order.isExecuted,
+          }.entries.map((entry) => '${entry.key}: ${entry.value}').join('\n')),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'Close',
+                style:
+                    TextStyle(color: Theme.of(context).colorScheme.secondary),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 
@@ -334,12 +355,4 @@ class IndexedOrder {
 
   final int index;
   final StrategyOrderModel order;
-}
-
-class ChartData {
-  ChartData(this.index, this.price, this.size);
-
-  final int index;
-  final double price;
-  final double size;
 }
