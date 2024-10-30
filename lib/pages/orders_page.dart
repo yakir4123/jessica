@@ -37,10 +37,14 @@ class OrdersPage extends ConsumerWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Text(
-                route.symbol, // Display the title based on route.symbol
+            Align(
+              alignment: Alignment.center, // Centers the title horizontally
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: Text(
+                  route.symbol, // Display the title based on route.symbol
+                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), // Optional styling
+                ),
               ),
             ),
             ordersPlotWidget(context, route, data.botParams.updateTime),
@@ -91,6 +95,7 @@ class OrdersPage extends ConsumerWidget {
           markerSettings: MarkerSettings(
             height: size,
             width: size,
+              shape: order.alignState == AlignState.align ? DataMarkerType.circle : DataMarkerType.rectangle
           ),
           onPointTap: (ChartPointDetails point) {
             _showOrderDetails(context, order);
@@ -166,167 +171,23 @@ class OrdersPage extends ConsumerWidget {
     return (value / 5000) * (100 - 15) + 15;
   }
 
-  // ordersData.forEach((key, value) {
-  //   if (_selectedSeries[key] == false) {
-  //     return; // Skip if the series is not selected
-  //   }
-  //   List<_OrderData> orderData = [];
-  //   late List<dynamic> orderList;
-  //   if (key == 'current-price') {
-  //     orderList = List<dynamic>.from([
-  //       {"price": value, "qty": 1, "dollars": 1}
-  //     ]);
-  //   } else {
-  //     orderList = List<dynamic>.from(value);
-  //   }
-  //
-  //   double medianSize = _calculateMedianSize(orderList, key);
-  //   double baseSize = 15.0;
-  //
-  //   for (int i = 0; i < orderList.length; i++) {
-  //     var order = orderList[i];
-  //     double size = (order["qty"] / medianSize) * baseSize;
-  //     orderData.add(_OrderData(i + 1, order["price"].toDouble(),
-  //         order["qty"].toDouble(), size.toDouble()));
-  //
-  //     // Update min/max for axis range adjustments
-  //     if (i + 1 < minX) minX = i + 1;
-  //     if (i + 1 > maxX) maxX = i + 1;
-  //     if (order["price"] < minY) minY = order["price"];
-  //     if (order["price"] > maxY) maxY = order["price"];
-  //   }
-  //
-  //   if (orderData.isNotEmpty) {
-  //     series.add(BubbleSeries<_OrderData, num>(
-  //       dataSource: orderData,
-  //       xValueMapper: (_OrderData order, _) => order.index,
-  //       yValueMapper: (_OrderData order, _) => order.price,
-  //       sizeValueMapper: (_OrderData order, _) => order.size,
-  //       color: _colorMap[key] ?? Colors.grey,
-  //       // Use color from the map or default to grey
-  //       name: key,
-  //       markerSettings: MarkerSettings(
-  //         isVisible: true,
-  //         color: _colorMap[key] ??
-  //             Colors.grey, // Use color from the map or default to grey
-  //       ),
-  //       onPointTap: (ChartPointDetails point) {
-  //         _showOrderDetails(context, point.pointIndex ?? 0,
-  //             point.seriesIndex ?? 0, orderData, key);
-  //       },
-  //     ));
-  //
-  //     seriesIndex++;
-  //   }
-  // });
-
-  // if (series.isEmpty) {
-  //   return Column(
-  //     children: [
-  //       const Expanded(
-  //         child: Center(
-  //           child: Text('Nothing to see'),
-  //         ),
-  //       ),
-  //       Wrap(
-  //         alignment: WrapAlignment.center,
-  //         children: ordersData.keys
-  //             .where((key) => key != 'current-price')
-  //             .map((key) => Padding(
-  //                   padding: const EdgeInsets.all(4.0),
-  //                   child: ElevatedButton(
-  //                     style: ElevatedButton.styleFrom(
-  //                       minimumSize: const Size(
-  //                           50, 30), // Reduce the size of the buttons
-  //                       backgroundColor: _selectedSeries[key] == false
-  //                           ? Colors.grey
-  //                           : _colorMap[key] ?? Colors.grey,
-  //                     ),
-  //                     onPressed: () {
-  //                       setState(() {
-  //                         _selectedSeries[key] =
-  //                             !(_selectedSeries[key] ?? true);
-  //                       });
-  //                     },
-  //                     child: Text(
-  //                         key.replaceAll("-", " ").replaceAll("orders", "")),
-  //                   ),
-  //                 ))
-  //             .toList(),
-  //       ),
-  //     ],
-  //   );
-  // }
-  //
-  // return Column(
-  //   children: [
-  //     Expanded(
-  //       child: Padding(
-  //         padding: const EdgeInsets.all(5.0),
-  //         child: SfCartesianChart(
-  //           tooltipBehavior: TooltipBehavior(enable: false),
-  //           series: series,
-  //           primaryXAxis: NumericAxis(
-  //             minimum: minX.isFinite
-  //                 ? minX - 1
-  //                 : 0, // Start a little before the first point
-  //             maximum: maxX.isFinite
-  //                 ? maxX + 1
-  //                 : 1, // End a little after the last point
-  //           ),
-  //           primaryYAxis: NumericAxis(
-  //             labelFormat: '{value}',
-  //             minimum: minY.isFinite ? minY - (0.1 * (maxY - minY)) : 0,
-  //             // Start a little below the lowest point
-  //             maximum: maxY.isFinite ? maxY + (0.1 * (maxY - minY)) : 1,
-  //             // End a little above the highest point
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //     Wrap(
-  //       alignment: WrapAlignment.center,
-  //       children: ordersData.keys
-  //           .where((key) => key != 'current-price')
-  //           .map((key) => Padding(
-  //                 padding: const EdgeInsets.all(4.0),
-  //                 child: ElevatedButton(
-  //                   style: ElevatedButton.styleFrom(
-  //                     minimumSize: const Size(
-  //                         50, 30), // Reduce the size of the buttons
-  //                     backgroundColor: _selectedSeries[key] == false
-  //                         ? Colors.grey
-  //                         : _colorMap[key] ?? Colors.grey,
-  //                   ),
-  //                   onPressed: () {
-  //                     setState(() {
-  //                       _selectedSeries[key] =
-  //                           !(_selectedSeries[key] ?? true);
-  //                     });
-  //                   },
-  //                   child: Text(
-  //                       key.replaceAll("-", " ").replaceAll("orders", "")),
-  //                 ),
-  //               ))
-  //           .toList(),
-  //     ),
-  //   ],
-  // );
-  // }
-
   void _showOrderDetails(BuildContext context, StrategyOrderModel order) {
-    String symbol = order.strategyId.split("--")[2];
+    String title = order.strategyId;
+    List<String> splittedStrategyId = order.strategyId.split("--");
+    if (splittedStrategyId.length >= 3) {
+      title = splittedStrategyId[2]; // Symbol
+    }
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(symbol),
+          title: Text(title),
           content: Text({
             'Strategy': order.strategyId,
             'qty': order.qty,
             'ratioQty': order.ratioQty,
             'price': order.price,
-            'timestamp': order.timestamp,
+            'timestamp':  DateTime.fromMillisecondsSinceEpoch(order.timestamp.toInt()),
             'isMimic': order.isMimic,
             'alignState': order.alignState.name,
             'type': order.type,
