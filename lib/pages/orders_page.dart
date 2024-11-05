@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:jessica/models/minutly_updates.dart';
 import 'package:jessica/services/providers.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
@@ -43,7 +44,9 @@ class OrdersPage extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: Text(
                   route.symbol, // Display the title based on route.symbol
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold), // Optional styling
+                  style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold), // Optional styling
                 ),
               ),
             ),
@@ -55,86 +58,66 @@ class OrdersPage extends ConsumerWidget {
     );
   }
 
-  Widget ordersPlotWidget(
-      BuildContext context, RouteWithOrdersModel route, double updateTime) {
+  Widget ordersPlotWidget(BuildContext context, RouteWithOrdersModel route,
+      double updateTime) {
     RouteOrdersModel routesOrders = route.routeOrders;
     List<StrategyOrderModel> sortedTOrders =
-        routesOrders.orders.where((order) => order.timestamp != 0).toList();
+    routesOrders.orders.where((order) => order.timestamp != 0).toList();
     sortedTOrders.sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
     // Find the minimum and maximum prices
     double minPrice = sortedTOrders.isNotEmpty
         ? sortedTOrders
-            .map((order) => order.price)
-            .reduce((a, b) => a < b ? a : b)
+        .map((order) => order.price)
+        .reduce((a, b) => a < b ? a : b)
         : 0.0;
     minPrice = min(routesOrders.currentPrice, minPrice);
     double maxPrice = sortedTOrders.isNotEmpty
         ? sortedTOrders
-            .map((order) => order.price)
-            .reduce((a, b) => a > b ? a : b)
+        .map((order) => order.price)
+        .reduce((a, b) => a > b ? a : b)
         : 1.0;
     maxPrice = max(routesOrders.currentPrice, maxPrice);
     minPrice = minPrice - 0.05 * (maxPrice - minPrice);
     maxPrice = maxPrice + 0.05 * (maxPrice - minPrice);
 
-    List<IndexedOrder> indexedOrders =
-        sortedTOrders.asMap().entries.map((entry) {
-      return IndexedOrder(entry.key, entry.value);
-    }).toList();
-    List<ChartSeries<StrategyOrderModel, num>> series =
-        sortedTOrders.asMap().entries.map((entry) {
-      int index = entry.key;
-      StrategyOrderModel order = entry.value;
-      double size = _getSize(order.qty, order.price);
-      return ScatterSeries<StrategyOrderModel, num>(
-          dataSource: [order],
-          xValueMapper: (StrategyOrderModel o, _) => index,
-          yValueMapper: (StrategyOrderModel o, _) => o.price,
-          pointColorMapper: (StrategyOrderModel o, _) => _getColor(o),
-          markerSettings: MarkerSettings(
-            height: size,
-            width: size,
-              shape: order.alignState == AlignState.align ? DataMarkerType.circle : DataMarkerType.rectangle
-          ),
-          onPointTap: (ChartPointDetails point) {
-            _showOrderDetails(context, order);
-          });
-    }).toList();
-
-    int currTimestampIndex = 0;
-    if (indexedOrders.isNotEmpty) {
-      try {
-        currTimestampIndex = indexedOrders
-            .firstWhere((entry) => entry.order.strategyId == 'route')
-            .index;
-      } catch (e) {
-        // in case there are only entry orders and its not in position
-        currTimestampIndex = -1; // before index = 0
+    List<IndexedOrder> indexedOrders = [];
+    int timestampIndex = 0;
+    double prevTimestamp = -1;
+    for (var entry in sortedTOrders
+        .asMap()
+        .entries) {
+      if (entry.value.timestamp != prevTimestamp) {
+        prevTimestamp = entry.value.timestamp;
+        timestampIndex += 1;
       }
-    }
-    if (sortedTOrders.isNotEmpty) {
-      series.add(ScatterSeries<StrategyOrderModel, num>(
-        dataSource: [sortedTOrders[0]],
-        // fake an order for typing..
-        xValueMapper: (StrategyOrderModel o, _) => currTimestampIndex,
-        yValueMapper: (StrategyOrderModel o, _) => routesOrders.currentPrice,
-        pointColorMapper: (StrategyOrderModel o, _) => Colors.grey,
-        markerSettings: const MarkerSettings(
-          height: 10,
-          width: 10,
-        ),
-      ));
+      indexedOrders.add(IndexedOrder(timestampIndex, entry.value));
     }
 
+    List<ChartSeries<StrategyOrderModel, num>> series =
+    partiallyFilledOrders(context, indexedOrders);
+    series.addAll(filledOrders(context, indexedOrders, maxPrice, minPrice));
+    series.add(currentPrice(context, indexedOrders, routesOrders.currentPrice));
+
+    Map<double, String> xLabels = getXLabels(indexedOrders);
     return SfCartesianChart(
       tooltipBehavior: TooltipBehavior(enable: false),
       series: series,
       primaryXAxis: NumericAxis(
-        minimum: -1.5,
-        maximum: sortedTOrders.length.toDouble(),
+        minimum: -1,
+        maximum: timestampIndex.toDouble() + 1,
         majorGridLines: const MajorGridLines(width: 0),
-        isVisible: false,
+        interval: 1,
+        axisLabelFormatter: (AxisLabelRenderDetails args) {
+          // Custom logic to choose labels
+          if (xLabels.containsKey(args.value)) {
+            // Show only even labels, for example
+            return ChartAxisLabel(xLabels[args.value]!, TextStyle());
+          } else {
+            // Skip odd labels by returning an empty string
+            return ChartAxisLabel('', TextStyle());
+          }
+        },
       ),
       primaryYAxis: NumericAxis(
         minimum: minPrice,
@@ -143,8 +126,125 @@ class OrdersPage extends ConsumerWidget {
     );
   }
 
+  List<ChartSeries<StrategyOrderModel, num>> partiallyFilledOrders(
+      BuildContext context, List<IndexedOrder> indexedOrders) {
+    return indexedOrders
+        .where((entry) => entry.order.ratioQty != 1)
+        .map((entry) {
+      int index = entry.index;
+      StrategyOrderModel order = entry.order;
+      double size = _getSize(order.qty, order.price);
+      Color color = _getColor(order);
+      return ScatterSeries<StrategyOrderModel, num>(
+          dataSource: [order],
+          xValueMapper: (StrategyOrderModel o, _) => index,
+          yValueMapper: (StrategyOrderModel o, _) => o.price,
+          pointColorMapper: (StrategyOrderModel o, _) =>
+              color.withOpacity(0.33),
+          markerSettings: MarkerSettings(
+            height: size,
+            width: size,
+            shape: order.alignState == AlignState.align
+                ? DataMarkerType.rectangle
+                : DataMarkerType.diamond,
+          ),
+          onPointTap: (ChartPointDetails point) {
+            _showOrderDetails(context, order);
+          });
+    }).toList();
+  }
+
+  List<ChartSeries<StrategyOrderModel, num>> filledOrders(BuildContext context,
+      List<IndexedOrder> indexedOrders, double maxPrice, double minPrice) {
+    return indexedOrders.map((entry) {
+      int index = entry.index;
+      StrategyOrderModel order = entry.order;
+      double size = _getSize(order.qty, order.price);
+      return ScatterSeries<StrategyOrderModel, num>(
+          dataSource: [order],
+          xValueMapper: (StrategyOrderModel o, _) => index,
+          yValueMapper: (StrategyOrderModel o, _) =>
+          o.price -
+              size * (1 - order.ratioQty) / 2 * (maxPrice - minPrice) / 276,
+          pointColorMapper: (StrategyOrderModel o, _) => _getColor(o),
+          markerSettings: MarkerSettings(
+              height: size * order.ratioQty,
+              width: size,
+              shape: order.alignState == AlignState.align
+                  ? DataMarkerType.rectangle
+                  : DataMarkerType.diamond),
+          onPointTap: (ChartPointDetails point) {
+            _showOrderDetails(context, order);
+          });
+    }).toList();
+  }
+
+  ChartSeries<StrategyOrderModel, num> currentPrice(BuildContext context,
+      List<IndexedOrder> indexedOrders, double price) {
+    int currTimestampIndex = 0;
+    if (indexedOrders.isNotEmpty) {
+      try {
+        currTimestampIndex = indexedOrders
+            .firstWhere((entry) => entry.order.strategyId == 'route')
+            .index;
+      } catch (e) {
+        // in case there are only entry orders and its not in position
+        currTimestampIndex = 0; // before index = 0
+      }
+    }
+    return ScatterSeries<StrategyOrderModel, num>(
+      dataSource: [
+        StrategyOrderModel(
+            strategyId: "",
+            qty: 0,
+            ratioQty: 0,
+            price: 0,
+            timestamp: 0,
+            isMimic: false,
+            alignState: AlignState.align,
+            type: OrderType.buy,
+            isExecuted: true)
+      ],
+      // fake an order for typing..
+      xValueMapper: (StrategyOrderModel o, _) => currTimestampIndex,
+      yValueMapper: (StrategyOrderModel o, _) => price,
+      pointColorMapper: (StrategyOrderModel o, _) => Colors.grey,
+      markerSettings: const MarkerSettings(
+        height: 10,
+        width: 10,
+      ),
+    );
+  }
+
+  Map<double, String> getXLabels(List<IndexedOrder> indexedOrders) {
+    Map<double, String> mapIndexes = {};
+
+    int positionIndex = -1;
+    for (var entry in indexedOrders) {
+      if (entry.order.strategyId == 'route') {
+        positionIndex = entry.index;
+      }
+      mapIndexes[entry.index.toDouble()] = entry.date(); // Overwrites if x already exists
+    }
+    if (positionIndex == -1) {
+      positionIndex = 0;
+      mapIndexes[0] = DateFormat('HH:mm\ndd/MM').format(DateTime.now());
+    }
+
+    int modulo = 1 + indexedOrders.length ~/ 5;
+
+    return Map.fromEntries(mapIndexes.entries.where((entry) => (entry.key - positionIndex) % modulo == 0));
+  }
+
   Color _getColor(StrategyOrderModel order) {
-    double opacity = order.isMimic ? 1 : 0.5;
+    double opacity = 1;
+    if (order.isMimic) {
+      if (order.ratioQty < 1) {
+        opacity = 0.15;
+      } else {
+        opacity = 0.5;
+      }
+    }
 
     if (order.isExecuted) {
       return Colors.blue.withOpacity(opacity);
@@ -187,7 +287,8 @@ class OrdersPage extends ConsumerWidget {
             'qty': order.qty,
             'ratioQty': order.ratioQty,
             'price': order.price,
-            'timestamp':  DateTime.fromMillisecondsSinceEpoch(order.timestamp.toInt()),
+            'timestamp':
+            DateTime.fromMillisecondsSinceEpoch(order.timestamp.toInt()),
             'isMimic': order.isMimic,
             'alignState': order.alignState.name,
             'type': order.type,
@@ -198,7 +299,10 @@ class OrdersPage extends ConsumerWidget {
               child: Text(
                 'Close',
                 style:
-                    TextStyle(color: Theme.of(context).colorScheme.secondary),
+                TextStyle(color: Theme
+                    .of(context)
+                    .colorScheme
+                    .secondary),
               ),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -216,4 +320,10 @@ class IndexedOrder {
 
   final int index;
   final StrategyOrderModel order;
+
+  String date() {
+    return DateFormat('HH:mm\ndd/MM').format(
+        DateTime.fromMillisecondsSinceEpoch(
+            order.timestamp.toInt()));
+  }
 }

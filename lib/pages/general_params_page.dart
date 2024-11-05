@@ -28,7 +28,7 @@ class GeneralParamsPage extends ConsumerWidget {
           child: Column(
             children: [
               SizedBox(
-                height: 250,
+                height: 300,
                 child: GridView(
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

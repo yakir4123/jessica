@@ -13,6 +13,10 @@ class PortfolioChartWidget extends StatelessWidget {
     List<_ChartData> lineChartData = _generateLineChartData(symbolize_df);
     List<_PieData> pieChartData = _generatePieChartData(symbolize_df);
 
+    List<String> strategyIds = {
+      for (var item in lineChartData) item.strategyId
+    }.toList();
+
     return SizedBox(
       height: 700,
       child: Column(
@@ -42,32 +46,25 @@ class PortfolioChartWidget extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16.0), // Spacing between charts
-          // Stacked Area Chart
           SfCartesianChart(
             legend: Legend(isVisible: true, position: LegendPosition.bottom),
-            primaryXAxis: NumericAxis(
-              edgeLabelPlacement: EdgeLabelPlacement.shift,
+            primaryXAxis: DateTimeAxis(),  // Ensures DateTime values are expected on the X-axis
+            primaryYAxis: NumericAxis(
+              minimum: 0,
+              maximum: 1,
             ),
-            primaryYAxis: NumericAxis(),
             series: <ChartSeries>[
-              // Dynamic series creation from symbolize_df data
-              StackedAreaSeries<_ChartData, double>(
-                dataSource: lineChartData,
-                xValueMapper: (_ChartData data, _) => data.x,
-                yValueMapper: (_ChartData data, _) => data.y,
-                name: 'Series 1',
-                color: _getRandomColor(), // Random color for the series
-              ),
-              StackedAreaSeries<_ChartData, double>(
-                dataSource: lineChartData,
-                xValueMapper: (_ChartData data, _) => data.x,
-                yValueMapper: (_ChartData data, _) => data.y2,
-                name: 'Series 2',
-                color: _getRandomColor(), // Random color for the series
-              ),
+              for (String strategyId in strategyIds)
+                StackedAreaSeries<_ChartData, DateTime>(
+                  dataSource: lineChartData.where((data) => data.strategyId == strategyId).toList(),
+                  xValueMapper: (_ChartData data, _) => data.timestamp,
+                  yValueMapper: (_ChartData data, _) => data.weight,
+                  name: strategyId,
+                ),
             ],
-            tooltipBehavior: TooltipBehavior(enable: true), // Tooltip on hover
-          ),
+            tooltipBehavior: TooltipBehavior(enable: true),
+          )
+          // Stacked Area Chart
         ],
       ),
     );
@@ -75,14 +72,16 @@ class PortfolioChartWidget extends StatelessWidget {
 
   // Generate line chart data from symbolize_df
   List<_ChartData> _generateLineChartData(Map<num, Map<String, dynamic>> data) {
-    List<_ChartData> chartData = [];
-    // int index = 0;
-    // for (var entry in data.entries) {
-    //   chartData.add(_ChartData(index.toDouble(), entry.value.toDouble(),
-    //       entry.value.toDouble() * 0.9)); // Simulate y2 as 90% of y
-    //   index++;
-    // }
-    return chartData;
+    List<_ChartData> chartDataList = [];
+
+    data.forEach((timestamp, strategyMap) {
+      DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp.toInt());
+      strategyMap.forEach((strategyId, weight) {
+        chartDataList.add(_ChartData(dateTime, strategyId, weight.toDouble()));
+      });
+    });
+
+    return chartDataList;
   }
 
   // Generate pie chart data from symbolize_df
@@ -109,10 +108,10 @@ class PortfolioChartWidget extends StatelessWidget {
 
 // Chart Data Model
 class _ChartData {
-  _ChartData(this.x, this.y, this.y2);
-  final double x;
-  final double y;
-  final double y2;
+  final DateTime timestamp;
+  final String strategyId;
+  final double weight;
+  _ChartData(this.timestamp, this.strategyId, this.weight);
 }
 
 // Pie Chart Data Model
