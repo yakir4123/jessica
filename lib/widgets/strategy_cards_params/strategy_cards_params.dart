@@ -8,11 +8,14 @@ import 'package:jessica/widgets/attribute_card.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class StrategyCardsParams extends ConsumerWidget {
-  const StrategyCardsParams({super.key});
+  final double availableWidth;
+  const StrategyCardsParams({super.key, required this.availableWidth});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final routes = ref.watch(dataServiceProvider)?.routesParams;
+    final routes = ref
+        .watch(dataServiceProvider)
+        ?.routesParams;
     final selectedSymbol = ref.watch(selectedSymbolProvider);
     final selectedStrategy = ref.watch(selectedStrategyProvider);
     if (selectedStrategy == null) {
@@ -24,20 +27,66 @@ class StrategyCardsParams extends ConsumerWidget {
       return const Text('');
     }
     final cardData =
-        createCardsData(route.schedulerParams.strategies[selectedStrategy]!);
+    createCardsData(route.schedulerParams.strategies[selectedStrategy]!);
+    List<AttributeCard> sortedEntries = arrangeWidgets(cardData.entries.map((entry) {
+      return AttributeCard(
+        name: entry.key,
+        value: entry.value,
+      );
+    }).toList());
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Wrap(
         spacing: 8.0, // Space between cards horizontally
         runSpacing: 8.0, // Space between cards vertically when wrapping
-        children: cardData.entries.map((entry) {
-          return AttributeCard(
-            name: entry.key,
-            value: entry.value,
-          );
-        }).toList(),
+        children: sortedEntries,
       ),
     );
+  }
+
+  List<AttributeCard> arrangeWidgets(List<AttributeCard> widgets) {
+    // Sort the widgets in decreasing order of width
+    List<AttributeCard> sortedWidgets = List.from(widgets);
+    sortedWidgets.sort((a, b) => b.compareTo(a));
+    List<_Line> lines = [];
+
+    for (AttributeCard widget in sortedWidgets) {
+      bool placed = false;
+
+      // Try to place the widget in the best-fitting line
+      _Line? bestLine;
+      double minSpaceLeft = double.infinity;
+
+      for (_Line line in lines) {
+        double spaceLeft = line.remainingSpace - widget.widthOfCard();
+        if (spaceLeft >= 0 && spaceLeft < minSpaceLeft) {
+          minSpaceLeft = spaceLeft;
+          bestLine = line;
+        }
+      }
+
+      if (bestLine != null) {
+        bestLine.widgets.add(widget);
+        bestLine.remainingSpace -= widget.widthOfCard();
+        placed = true;
+      }
+
+      if (!placed) {
+        _Line newLine = _Line(availableWidth);
+        newLine.widgets.add(widget);
+        newLine.remainingSpace -= widget.widthOfCard();
+        lines.add(newLine);
+      }
+    }
+
+    // Flatten the lines into a single ordered list of widgets
+    List<AttributeCard> orderedWidgets = [];
+    for (_Line line in lines) {
+      orderedWidgets.addAll(line.widgets);
+    }
+
+    return orderedWidgets;
   }
 
   Map<String, String> createCardsData(MiniStrategyParamsModel params) {
@@ -122,9 +171,11 @@ class StrategyCardsParams extends ConsumerWidget {
   String formatDouble(double value) {
     if (value == 0.0) return "0";
     String valueStr = value.toString();
-    int firstSignificantDigitIndex = valueStr.indexOf(RegExp(r'[1-9]'), valueStr.indexOf('.') + 1);
+    int firstSignificantDigitIndex = valueStr.indexOf(
+        RegExp(r'[1-9]'), valueStr.indexOf('.') + 1);
 
-    int decimalPlaces = (firstSignificantDigitIndex - valueStr.indexOf('.')).clamp(1, 20) + 2;
+    int decimalPlaces = (firstSignificantDigitIndex - valueStr.indexOf('.'))
+        .clamp(1, 20) + 2;
 
     String formattedValue = value.toStringAsFixed(decimalPlaces);
     while (formattedValue.contains('.') && formattedValue.endsWith('0')) {
@@ -135,4 +186,11 @@ class StrategyCardsParams extends ConsumerWidget {
     }
     return formattedValue;
   }
+}
+
+class _Line {
+  double remainingSpace;
+  List<AttributeCard> widgets;
+
+  _Line(this.remainingSpace) : widgets = [];
 }

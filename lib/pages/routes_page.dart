@@ -16,26 +16,28 @@ class RoutesPage extends ConsumerWidget {
     final selectedSymbol = ref.watch(selectedSymbolProvider);
 
     return Scaffold(
-      appBar: createAppBar(context, ref, selectedSymbol),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: (selectedSymbol == null)
-              ? []
-              : [
-                  buildPrecisionRow(
-                      ref, selectedSymbol), // Conditionally add Row 1
-                  const SizedBox(height: 16),
-                  const StrategyDropdown(),
-                  const SizedBox(height: 16),
-                  const StrategyOrdersTable(),
-                  const SizedBox(height: 16),
-                  const StrategyCardsParams(),
-                ],
-        ),
-      ),
-    );
+        appBar: createAppBar(context, ref, selectedSymbol),
+        body: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: LayoutBuilder(
+                builder: (BuildContext context, BoxConstraints constraints) {
+              final double availableWidth = constraints.maxWidth;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: (selectedSymbol == null)
+                    ? []
+                    : [
+                        buildPrecisionRow(
+                            ref, selectedSymbol), // Conditionally add Row 1
+                        const SizedBox(height: 16),
+                        const StrategyDropdown(),
+                        const SizedBox(height: 16),
+                        const StrategyOrdersTable(),
+                        const SizedBox(height: 16),
+                        StrategyCardsParams(availableWidth: availableWidth),
+                      ],
+              );
+            })));
   }
 
   AppBar createAppBar(

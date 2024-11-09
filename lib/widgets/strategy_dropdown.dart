@@ -22,7 +22,7 @@ class StrategyDropdown extends ConsumerWidget {
         width: double.infinity,
         child: Theme(
           data: Theme.of(context).copyWith(
-            canvasColor: Theme.of(context).cardColor, // Match dropdown background to card color
+            canvasColor: Theme.of(context).cardColor,
             textTheme: TextTheme(
               titleMedium: Theme.of(context)
                   .textTheme
@@ -35,7 +35,7 @@ class StrategyDropdown extends ConsumerWidget {
             hint: Text(
               selectedStrategyKey ?? 'Select a strategy',
               style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface, // Match text color to card text color
+                color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             value: selectedStrategyKey,
@@ -47,9 +47,8 @@ class StrategyDropdown extends ConsumerWidget {
                 value: entry.key,
                 child: Text(
                   entry.key,
-                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface, // Ensure dropdown item text matches card theme
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               );

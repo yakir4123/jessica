@@ -13,9 +13,8 @@ class PortfolioChartWidget extends StatelessWidget {
     List<_ChartData> lineChartData = _generateLineChartData(symbolizeDf);
     List<_PieData> pieChartData = _generatePieChartData(symbolizeDf);
 
-    List<String> strategyIds = {
-      for (var item in lineChartData) item.strategyId
-    }.toList();
+    List<String> strategyIds =
+        {for (var item in lineChartData) item.symbol}.toList();
 
     return SizedBox(
       height: 700,
@@ -33,22 +32,21 @@ class PortfolioChartWidget extends StatelessWidget {
               ),
               series: <CircularSeries>[
                 PieSeries<_PieData, String>(
-                  dataSource: pieChartData,
-                  xValueMapper: (_PieData data, _) => data.category,
-                  yValueMapper: (_PieData data, _) => data.value,
-
-                  pointColorMapper: (_PieData data, _) =>
-                      _getRandomColor(), // Random color for each pie slice
-                ),
+                    dataSource: pieChartData,
+                    xValueMapper: (_PieData data, _) => data.symbol,
+                    yValueMapper: (_PieData data, _) => data.value,
+                    pointColorMapper: (_PieData data, _) =>
+                        _getColor(data.symbol)),
               ],
               tooltipBehavior:
-              TooltipBehavior(enable: true), // Tooltip on hover
+                  TooltipBehavior(enable: true), // Tooltip on hover
             ),
           ),
           const SizedBox(height: 16.0), // Spacing between charts
           SfCartesianChart(
             legend: Legend(isVisible: true, position: LegendPosition.bottom),
-            primaryXAxis: DateTimeAxis(),  // Ensures DateTime values are expected on the X-axis
+            primaryXAxis: DateTimeAxis(),
+            // Ensures DateTime values are expected on the X-axis
             primaryYAxis: NumericAxis(
               minimum: 0,
               maximum: 1,
@@ -56,11 +54,13 @@ class PortfolioChartWidget extends StatelessWidget {
             series: <ChartSeries>[
               for (String strategyId in strategyIds)
                 StackedAreaSeries<_ChartData, DateTime>(
-                  dataSource: lineChartData.where((data) => data.strategyId == strategyId).toList(),
-                  xValueMapper: (_ChartData data, _) => data.timestamp,
-                  yValueMapper: (_ChartData data, _) => data.weight,
-                  name: strategyId,
-                ),
+                    dataSource: lineChartData
+                        .where((data) => data.symbol == strategyId)
+                        .toList(),
+                    xValueMapper: (_ChartData data, _) => data.timestamp,
+                    yValueMapper: (_ChartData data, _) => data.weight,
+                    pointColorMapper: (_ChartData data, _) =>
+                        _getColor(data.symbol)),
             ],
             tooltipBehavior: TooltipBehavior(enable: true),
           )
@@ -75,9 +75,10 @@ class PortfolioChartWidget extends StatelessWidget {
     List<_ChartData> chartDataList = [];
 
     data.forEach((timestamp, strategyMap) {
-      DateTime dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp.toInt());
-      strategyMap.forEach((strategyId, weight) {
-        chartDataList.add(_ChartData(dateTime, strategyId, weight.toDouble()));
+      DateTime dateTime =
+          DateTime.fromMillisecondsSinceEpoch(timestamp.toInt());
+      strategyMap.forEach((symbol, weight) {
+        chartDataList.add(_ChartData(dateTime, symbol, weight.toDouble()));
       });
     });
 
@@ -85,9 +86,11 @@ class PortfolioChartWidget extends StatelessWidget {
   }
 
   // Generate pie chart data from symbolize_df
-  List<_PieData> _generatePieChartData(Map<num, Map<String, dynamic>> allocationSeries) {
+  List<_PieData> _generatePieChartData(
+      Map<num, Map<String, dynamic>> allocationSeries) {
     List<_PieData> pieData = [];
-    Map<String, dynamic> latestAllocation = PortfolioWeightsService.getLatestAllocation(allocationSeries);
+    Map<String, dynamic> latestAllocation =
+        PortfolioWeightsService.getLatestAllocation(allocationSeries);
     for (var entry in latestAllocation.entries) {
       pieData.add(_PieData(entry.key, entry.value.toDouble()));
     }
@@ -95,9 +98,22 @@ class PortfolioChartWidget extends StatelessWidget {
   }
 
   // Function to generate random colors
-  Color _getRandomColor() {
+  Color _getColor(String symbol) {
     final Random random = Random();
-    return Color.fromARGB(
+    return {
+      'TRX-USDT': Colors.red,
+      'UNI-USDT': Colors.pinkAccent,
+      'SAND-USDT': Colors.yellow,
+      'LINK-USDT': Colors.deepPurple,
+      'HBAR-USDT': Colors.black26,
+      'GRT-USDT': Colors.deepPurpleAccent,
+      'ETH-USDT': Colors.blueGrey,
+      'DOT-USDT': Colors.pink,
+      'DOGE-USDT': Colors.brown,
+      'CHZ-USDT': Colors.redAccent,
+      'DASH-USDT': Colors.lightBlueAccent,
+
+    }[symbol] ?? Color.fromARGB(
       255,
       random.nextInt(256), // Random red value
       random.nextInt(256), // Random green value
@@ -109,14 +125,16 @@ class PortfolioChartWidget extends StatelessWidget {
 // Chart Data Model
 class _ChartData {
   final DateTime timestamp;
-  final String strategyId;
+  final String symbol;
   final double weight;
-  _ChartData(this.timestamp, this.strategyId, this.weight);
+
+  _ChartData(this.timestamp, this.symbol, this.weight);
 }
 
 // Pie Chart Data Model
 class _PieData {
-  _PieData(this.category, this.value);
-  final String category;
+  _PieData(this.symbol, this.value);
+
+  final String symbol;
   final double value;
 }
