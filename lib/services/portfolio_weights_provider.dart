@@ -1,14 +1,24 @@
-import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:async';
+import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 // Define a class to interact with the server
 class PortfolioWeightsService {
+  Map<num, Map<String, dynamic>>? cache;
+  DateTime cacheTimestamp = DateTime(1970);
+
   final String _baseUrl =
       "http://${dotenv.env["JESSE_SERVER_IP"]}:${dotenv.env["JESSE_SERVER_PORT"]}";
 
   Future<Map<num, Map<String, dynamic>>> fetchPortfolioWeights() async {
+    if (cache != null &&
+        (DateTime.now().difference(cacheTimestamp) <
+            const Duration(minutes: 10))) {
+      return cache!;
+    }
+
     final String url = '$_baseUrl/portfolio-weights';
 
     try {
@@ -19,6 +29,8 @@ class PortfolioWeightsService {
         final Map<num, Map<String, dynamic>> portfolioAllocationSeries = {
           for (var key in data.keys) double.parse(key): data[key]
         };
+        cache = portfolioAllocationSeries;
+        cacheTimestamp = DateTime.now();
         return portfolioAllocationSeries;
       } else {
         print(
@@ -31,19 +43,22 @@ class PortfolioWeightsService {
     }
   }
 
-  static Map<String, dynamic> getLatestAllocation(Map<num, Map<String, dynamic>> seriesDf) {
+  static Map<String, dynamic> getLatestAllocation(
+      Map<num, Map<String, dynamic>> seriesDf) {
     if (seriesDf.isEmpty) return {};
-      num highestKey = seriesDf.keys.reduce((a, b) => a > b ? a : b);
-      return seriesDf[highestKey] ?? {};
+    num highestKey = seriesDf.keys.reduce((a, b) => a > b ? a : b);
+    return seriesDf[highestKey] ?? {};
   }
 
-  static Map<num,  Map<String, dynamic>> preProcessStrategyAllocationSeries(Map<num, Map<String, dynamic>> seriesDf) {
+  static Map<num, Map<String, dynamic>> preProcessStrategyAllocationSeries(
+      Map<num, Map<String, dynamic>> seriesDf) {
     return seriesDf.map((key, value) {
       return MapEntry(key, preProcessStrategyAllocation(value));
     });
   }
 
-  static Map<String, num> preProcessStrategyAllocation(Map<String, dynamic> df) {
+  static Map<String, num> preProcessStrategyAllocation(
+      Map<String, dynamic> df) {
     Set<String> symbols = df.keys
         .map((k) {
           List<String> parts = k.split('--');
@@ -71,13 +86,11 @@ class PortfolioWeightsService {
   }
 }
 
-// Create a provider for PortfolioWeightsService
 final portfolioWeightsServiceProvider =
     Provider<PortfolioWeightsService>((ref) {
   return PortfolioWeightsService();
 });
 
-// Create a FutureProvider for fetching portfolio weights
 final portfolioWeightsProvider =
     FutureProvider<Map<num, Map<String, dynamic>>>((ref) async {
   final service = ref.watch(portfolioWeightsServiceProvider);

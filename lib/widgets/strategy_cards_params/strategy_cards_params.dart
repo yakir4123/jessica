@@ -1,4 +1,5 @@
 import 'package:intl/intl.dart';
+import 'package:jessica/services/portfolio_weights_provider.dart';
 import 'package:jessica/utils.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
@@ -9,15 +10,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class StrategyCardsParams extends ConsumerWidget {
   final double availableWidth;
+
   const StrategyCardsParams({super.key, required this.availableWidth});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final routes = ref
-        .watch(dataServiceProvider)
-        ?.routesParams;
+    final routes = ref.watch(dataServiceProvider)?.routesParams;
     final selectedSymbol = ref.watch(selectedSymbolProvider);
     final selectedStrategy = ref.watch(selectedStrategyProvider);
+
     if (selectedStrategy == null) {
       return const Text('');
     }
@@ -26,14 +27,38 @@ class StrategyCardsParams extends ConsumerWidget {
     if (miniStrategy == null) {
       return const Text('');
     }
-    final cardData =
-    createCardsData(route.schedulerParams.strategies[selectedStrategy]!);
-    List<AttributeCard> sortedEntries = arrangeWidgets(cardData.entries.map((entry) {
+
+    final portfolioAsyncValue = ref.watch(portfolioWeightsProvider);
+    final cardData = createCardsData(
+        route.schedulerParams.strategies[selectedStrategy]!,
+        route.schedulerParams.balanceAllocator.allocations[selectedStrategy] ??
+            null);
+    List<AttributeCard> sortedEntries =
+        arrangeWidgets(cardData.entries.map((entry) {
       return AttributeCard(
         name: entry.key,
         value: entry.value,
       );
     }).toList());
+
+    portfolioAsyncValue.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stackTrace) => Center(child: Text('Error: $error')),
+      data: (portfolioWeights) {
+        // Add additional AttributeCard widgets from the fetched portfolio weights
+        if (portfolioWeights.keys.isEmpty) {
+          return;
+        }
+        num maxKey = portfolioWeights.keys.reduce((a, b) => a > b ? a : b);
+        final weight = portfolioWeights[maxKey]![selectedStrategy];
+
+        sortedEntries.add(AttributeCard(
+          name: 'portfolio-weight',
+          value: formatDouble(weight),
+        )
+        );
+      },
+    );
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -46,7 +71,6 @@ class StrategyCardsParams extends ConsumerWidget {
   }
 
   List<AttributeCard> arrangeWidgets(List<AttributeCard> widgets) {
-    // Sort the widgets in decreasing order of width
     List<AttributeCard> sortedWidgets = List.from(widgets);
     sortedWidgets.sort((a, b) => b.compareTo(a));
     List<_Line> lines = [];
@@ -59,7 +83,7 @@ class StrategyCardsParams extends ConsumerWidget {
       double minSpaceLeft = double.infinity;
 
       for (_Line line in lines) {
-        double spaceLeft = line.remainingSpace - widget.widthOfCard();
+        double spaceLeft = line.remainingSpace - widget.estimatedWidthOfCard();
         if (spaceLeft >= 0 && spaceLeft < minSpaceLeft) {
           minSpaceLeft = spaceLeft;
           bestLine = line;
@@ -68,14 +92,14 @@ class StrategyCardsParams extends ConsumerWidget {
 
       if (bestLine != null) {
         bestLine.widgets.add(widget);
-        bestLine.remainingSpace -= widget.widthOfCard();
+        bestLine.remainingSpace -= widget.estimatedWidthOfCard();
         placed = true;
       }
 
       if (!placed) {
         _Line newLine = _Line(availableWidth);
         newLine.widgets.add(widget);
-        newLine.remainingSpace -= widget.widthOfCard();
+        newLine.remainingSpace -= widget.estimatedWidthOfCard();
         lines.add(newLine);
       }
     }
@@ -89,7 +113,8 @@ class StrategyCardsParams extends ConsumerWidget {
     return orderedWidgets;
   }
 
-  Map<String, String> createCardsData(MiniStrategyParamsModel params) {
+  Map<String, String> createCardsData(
+      MiniStrategyParamsModel params, BalanceAllocationEntryModel? allocation) {
     final dataFormat = DateFormat('yyyy-MM-dd HH:mm');
     Map<String, String> res = {};
     if (params.position.allOrders.isNotEmpty) {
@@ -107,6 +132,14 @@ class StrategyCardsParams extends ConsumerWidget {
     for (var entry in params.extraData.entries) {
       res.addAll(createCardsDataFromExtra(entry));
     }
+    if (allocation == null) {
+      return res;
+    }
+    res['qty allocated'] = formatDouble(allocation.qtyAllocation);
+    res['dollar allocated'] = formatDouble(allocation.dollarAllocation);
+    res['used allocation'] = formatDouble(allocation.usedAllocated);
+    res['reserved allocation'] = formatDouble(allocation.reservedAllocation);
+    res['free allocation'] = formatDouble(allocation.freeAllocation);
     return res;
   }
 
@@ -171,11 +204,11 @@ class StrategyCardsParams extends ConsumerWidget {
   String formatDouble(double value) {
     if (value == 0.0) return "0";
     String valueStr = value.toString();
-    int firstSignificantDigitIndex = valueStr.indexOf(
-        RegExp(r'[1-9]'), valueStr.indexOf('.') + 1);
+    int firstSignificantDigitIndex =
+        valueStr.indexOf(RegExp(r'[1-9]'), valueStr.indexOf('.') + 1);
 
-    int decimalPlaces = (firstSignificantDigitIndex - valueStr.indexOf('.'))
-        .clamp(1, 20) + 2;
+    int decimalPlaces =
+        (firstSignificantDigitIndex - valueStr.indexOf('.')).clamp(1, 20) + 2;
 
     String formattedValue = value.toStringAsFixed(decimalPlaces);
     while (formattedValue.contains('.') && formattedValue.endsWith('0')) {

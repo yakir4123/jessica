@@ -11,20 +11,12 @@ class DataService extends StateNotifier<MinutelyOutputModel?>{
   }
 
   void _initialize() {
-    // Listen to the WebSocket stream
     _channel.stream.listen((data) {
       try {
-        // Step 2: Decode JSON string to a Map
         final Map<String, dynamic> jsonData = json.decode(data);
-
-        // Step 3: Convert Map to MinutelyOutputModel
         final model = MinutelyOutputModel.fromJson(jsonData);
-
-        // Step 4: Update state with the new model
         state = model;
       } catch (e) {
-        print("Error parsing WebSocket data: $e");
-        // Optionally set state to null if parsing fails
         state = null;
       }
     });
