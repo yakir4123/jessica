@@ -8,14 +8,6 @@ import 'package:jessica/services/providers.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 class OrdersPage extends ConsumerWidget {
-  final Map<String, Color> _colorMap = {
-    "buy": Colors.orange,
-    "sell": Colors.yellow,
-    "take_profit": Colors.green,
-    "stop_loss": Colors.red,
-    "average_entry": Colors.blue,
-    "current_price": Colors.white,
-  };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -58,24 +50,24 @@ class OrdersPage extends ConsumerWidget {
     );
   }
 
-  Widget ordersPlotWidget(BuildContext context, RouteWithOrdersModel route,
-      double updateTime) {
+  Widget ordersPlotWidget(
+      BuildContext context, RouteWithOrdersModel route, double updateTime) {
     RouteOrdersModel routesOrders = route.routeOrders;
     List<StrategyOrderModel> sortedTOrders =
-    routesOrders.orders.where((order) => order.timestamp != 0).toList();
+        routesOrders.orders.where((order) => order.timestamp != 0).toList();
     sortedTOrders.sort((a, b) => a.timestamp.compareTo(b.timestamp));
 
     // Find the minimum and maximum prices
     double minPrice = sortedTOrders.isNotEmpty
         ? sortedTOrders
-        .map((order) => order.price)
-        .reduce((a, b) => a < b ? a : b)
+            .map((order) => order.price)
+            .reduce((a, b) => a < b ? a : b)
         : 0.0;
     minPrice = min(routesOrders.currentPrice, minPrice);
     double maxPrice = sortedTOrders.isNotEmpty
         ? sortedTOrders
-        .map((order) => order.price)
-        .reduce((a, b) => a > b ? a : b)
+            .map((order) => order.price)
+            .reduce((a, b) => a > b ? a : b)
         : 1.0;
     maxPrice = max(routesOrders.currentPrice, maxPrice);
     minPrice = minPrice - 0.05 * (maxPrice - minPrice);
@@ -84,9 +76,7 @@ class OrdersPage extends ConsumerWidget {
     List<IndexedOrder> indexedOrders = [];
     int timestampIndex = 0;
     double prevTimestamp = -1;
-    for (var entry in sortedTOrders
-        .asMap()
-        .entries) {
+    for (var entry in sortedTOrders.asMap().entries) {
       if (entry.value.timestamp != prevTimestamp) {
         prevTimestamp = entry.value.timestamp;
         timestampIndex += 1;
@@ -95,7 +85,7 @@ class OrdersPage extends ConsumerWidget {
     }
 
     List<ChartSeries<StrategyOrderModel, num>> series =
-    partiallyFilledOrders(context, indexedOrders);
+        partiallyFilledOrders(context, indexedOrders);
     series.addAll(filledOrders(context, indexedOrders, maxPrice, minPrice));
     series.add(currentPrice(context, indexedOrders, routesOrders.currentPrice));
 
@@ -135,6 +125,7 @@ class OrdersPage extends ConsumerWidget {
       StrategyOrderModel order = entry.order;
       double size = _getSize(order.qty, order.price);
       Color color = _getColor(order);
+      DataMarkerType shape = _getShape(order);
       return ScatterSeries<StrategyOrderModel, num>(
           dataSource: [order],
           xValueMapper: (StrategyOrderModel o, _) => index,
@@ -144,13 +135,8 @@ class OrdersPage extends ConsumerWidget {
           markerSettings: MarkerSettings(
             height: size,
             width: size,
-            shape: order.alignState == AlignState.align
-                ? DataMarkerType.rectangle
-                : DataMarkerType.diamond,
-          ),
-          onPointTap: (ChartPointDetails point) {
-            _showOrderDetails(context, order);
-          });
+            shape: shape,
+          ));
     }).toList();
   }
 
@@ -160,27 +146,26 @@ class OrdersPage extends ConsumerWidget {
       int index = entry.index;
       StrategyOrderModel order = entry.order;
       double size = _getSize(order.qty, order.price);
+      DataMarkerType shape = _getShape(order);
       return ScatterSeries<StrategyOrderModel, num>(
           dataSource: [order],
           xValueMapper: (StrategyOrderModel o, _) => index,
           yValueMapper: (StrategyOrderModel o, _) =>
-          o.price -
+              o.price -
               size * (1 - order.ratioQty) / 2 * (maxPrice - minPrice) / 276,
           pointColorMapper: (StrategyOrderModel o, _) => _getColor(o),
           markerSettings: MarkerSettings(
               height: size * order.ratioQty,
               width: size,
-              shape: order.alignState == AlignState.align
-                  ? DataMarkerType.rectangle
-                  : DataMarkerType.diamond),
+              shape: shape),
           onPointTap: (ChartPointDetails point) {
             _showOrderDetails(context, order);
           });
     }).toList();
   }
 
-  ChartSeries<StrategyOrderModel, num> currentPrice(BuildContext context,
-      List<IndexedOrder> indexedOrders, double price) {
+  ChartSeries<StrategyOrderModel, num> currentPrice(
+      BuildContext context, List<IndexedOrder> indexedOrders, double price) {
     int currTimestampIndex = 0;
     if (indexedOrders.isNotEmpty) {
       try {
@@ -224,7 +209,8 @@ class OrdersPage extends ConsumerWidget {
       if (entry.order.strategyId == 'route') {
         positionIndex = entry.index;
       }
-      mapIndexes[entry.index.toDouble()] = entry.date(); // Overwrites if x already exists
+      mapIndexes[entry.index.toDouble()] =
+          entry.date(); // Overwrites if x already exists
     }
     if (positionIndex == -1) {
       positionIndex = 0;
@@ -233,18 +219,22 @@ class OrdersPage extends ConsumerWidget {
 
     int modulo = 1 + indexedOrders.length ~/ 5;
 
-    return Map.fromEntries(mapIndexes.entries.where((entry) => (entry.key - positionIndex) % modulo == 0));
+    return Map.fromEntries(mapIndexes.entries
+        .where((entry) => (entry.key - positionIndex) % modulo == 0));
+  }
+
+  DataMarkerType _getShape(StrategyOrderModel order) {
+    if (order.alignState != AlignState.align) {
+      return DataMarkerType.diamond;
+    }
+    if (order.isMimic) {
+      return DataMarkerType.circle;
+    }
+    return DataMarkerType.rectangle;
   }
 
   Color _getColor(StrategyOrderModel order) {
     double opacity = 1;
-    if (order.isMimic) {
-      if (order.ratioQty < 1) {
-        opacity = 0.15;
-      } else {
-        opacity = 0.5;
-      }
-    }
 
     if (order.isExecuted) {
       return Colors.blue.withOpacity(opacity);
@@ -288,7 +278,7 @@ class OrdersPage extends ConsumerWidget {
             'ratioQty': order.ratioQty,
             'price': order.price,
             'timestamp':
-            DateTime.fromMillisecondsSinceEpoch(order.timestamp.toInt()),
+                DateTime.fromMillisecondsSinceEpoch(order.timestamp.toInt()),
             'isMimic': order.isMimic,
             'alignState': order.alignState.name,
             'type': order.type,
@@ -299,10 +289,7 @@ class OrdersPage extends ConsumerWidget {
               child: Text(
                 'Close',
                 style:
-                TextStyle(color: Theme
-                    .of(context)
-                    .colorScheme
-                    .secondary),
+                    TextStyle(color: Theme.of(context).colorScheme.secondary),
               ),
               onPressed: () {
                 Navigator.of(context).pop();
@@ -322,8 +309,7 @@ class IndexedOrder {
   final StrategyOrderModel order;
 
   String date() {
-    return DateFormat('HH:mm\ndd/MM').format(
-        DateTime.fromMillisecondsSinceEpoch(
-            order.timestamp.toInt()));
+    return DateFormat('HH:mm\ndd/MM')
+        .format(DateTime.fromMillisecondsSinceEpoch(order.timestamp.toInt()));
   }
 }

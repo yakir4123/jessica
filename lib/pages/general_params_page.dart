@@ -24,11 +24,11 @@ class GeneralParamsPage extends ConsumerWidget {
       padding: const EdgeInsets.all(16.0),
       child: SingleChildScrollView(
         child: SizedBox(
-          height: 1000,
+          height: 1050,
           child: Column(
             children: [
               SizedBox(
-                height: 300,
+                height: 350,
                 child: GridView(
                   physics: const NeverScrollableScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(

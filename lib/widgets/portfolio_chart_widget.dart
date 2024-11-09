@@ -4,14 +4,14 @@ import 'package:syncfusion_flutter_charts/charts.dart';
 import 'package:jessica/services/portfolio_weights_provider.dart';
 
 class PortfolioChartWidget extends StatelessWidget {
-  final Map<num, Map<String, dynamic>> symbolize_df;
+  final Map<num, Map<String, dynamic>> symbolizeDf;
 
-  PortfolioChartWidget({required this.symbolize_df});
+  const PortfolioChartWidget({super.key, required this.symbolizeDf});
 
   @override
   Widget build(BuildContext context) {
-    List<_ChartData> lineChartData = _generateLineChartData(symbolize_df);
-    List<_PieData> pieChartData = _generatePieChartData(symbolize_df);
+    List<_ChartData> lineChartData = _generateLineChartData(symbolizeDf);
+    List<_PieData> pieChartData = _generatePieChartData(symbolizeDf);
 
     List<String> strategyIds = {
       for (var item in lineChartData) item.strategyId

@@ -217,6 +217,10 @@ class MiniStrategyParamsModel {
   @JsonKey(name: 'entry_expiration')
   final double entryExpiration;
 
+  /// Map to store any extra fields not defined in the model
+  @JsonKey(includeFromJson: false, includeToJson: false)
+  final Map<String, dynamic> extraData;
+
   MiniStrategyParamsModel({
     required this.buy,
     required this.sell,
@@ -225,12 +229,35 @@ class MiniStrategyParamsModel {
     required this.position,
     this.expiration = double.infinity,
     this.entryExpiration = double.infinity,
+    this.extraData = const {},
   });
 
-  factory MiniStrategyParamsModel.fromJson(Map<String, dynamic> json) =>
-      _$MiniStrategyParamsModelFromJson(json);
+  factory MiniStrategyParamsModel.fromJson(Map<String, dynamic> json) {
+    // Parse known properties using the generated function
+    final instance = _$MiniStrategyParamsModelFromJson(json);
 
-  Map<String, dynamic> toJson() => _$MiniStrategyParamsModelToJson(this);
+    // Extract additional properties
+    final extraData = Map<String, dynamic>.from(json)
+      ..removeWhere((key, _) => instance.toJson().containsKey(key));
+
+    return MiniStrategyParamsModel(
+      buy: instance.buy,
+      sell: instance.sell,
+      takeProfit: instance.takeProfit,
+      stopLoss: instance.stopLoss,
+      position: instance.position,
+      expiration: instance.expiration,
+      entryExpiration: instance.entryExpiration,
+      extraData: extraData,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    final json = _$MiniStrategyParamsModelToJson(this);
+    // Add extraData to the JSON map
+    json.addAll(extraData);
+    return json;
+  }
 }
 
 @JsonSerializable()

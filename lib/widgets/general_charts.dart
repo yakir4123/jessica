@@ -13,7 +13,7 @@ class GeneralCharts extends ConsumerWidget {
         data: (Map<num, Map<String, dynamic>> data) {
       Map<num, Map<String, dynamic>> symbolizeDf =
           PortfolioWeightsService.preProcessStrategyAllocationSeries(data);
-      return PortfolioChartWidget(symbolize_df: symbolizeDf);
+      return PortfolioChartWidget(symbolizeDf: symbolizeDf);
     }, error: (Object error, StackTrace stackTrace) {
       return Center(child: Text('Error: $error'));
     }, loading: () {

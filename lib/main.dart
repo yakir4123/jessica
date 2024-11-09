@@ -1,11 +1,10 @@
+import 'custom_theme_extension.dart';
 import 'package:flutter/material.dart';
+import 'package:jessica/pages/orders_page.dart';
+import 'package:jessica/pages/routes_page.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jessica/pages/general_params_page.dart';
-import 'package:jessica/pages/orders_page.dart';
-import 'package:jessica/pages/unique_params_page.dart';
-import 'package:jessica/services/providers.dart';
-import 'custom_theme_extension.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -60,9 +59,6 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(dataServiceProvider);
-    final dataService = ref.read(dataServiceProvider.notifier);
-
     return Scaffold(
       // appBar: AppBar(
       //   actions: [
@@ -133,7 +129,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
         children: [
           GeneralParamsPage(),
           OrdersPage(),
-          // const UniqueParamsPage(),
+          RoutesPage(),
         ],
       ),
       bottomNavigationBar: Theme(
@@ -152,8 +148,8 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
               label: 'Orders',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.school),
-              label: 'Unique',
+              icon: Icon(Icons.add_road),
+              label: 'Routes',
             ),
           ],
           currentIndex: _selectedIndex,
