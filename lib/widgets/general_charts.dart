@@ -4,7 +4,7 @@ import 'package:jessica/services/portfolio_weights_provider.dart';
 import 'package:jessica/widgets/portfolio_chart_widget.dart';
 
 class GeneralCharts extends ConsumerWidget {
-  GeneralCharts({super.key});
+  const GeneralCharts({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

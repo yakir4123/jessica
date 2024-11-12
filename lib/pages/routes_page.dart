@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jessica/models/minutly_updates.dart';
 import 'package:jessica/services/providers.dart';
+import 'package:jessica/widgets/equity_curve.dart';
 import 'package:jessica/widgets/general_card.dart';
 import 'package:jessica/widgets/strategy_cards_params/strategy_cards_params.dart';
 import 'package:jessica/widgets/strategy_dropdown.dart';
@@ -22,21 +23,27 @@ class RoutesPage extends ConsumerWidget {
             child: LayoutBuilder(
                 builder: (BuildContext context, BoxConstraints constraints) {
               final double availableWidth = constraints.maxWidth;
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: (selectedSymbol == null)
-                    ? []
-                    : [
-                        buildPrecisionRow(
-                            ref, selectedSymbol), // Conditionally add Row 1
-                        const SizedBox(height: 16),
-                        const StrategyDropdown(),
-                        const SizedBox(height: 16),
-                        const StrategyOrdersTable(),
-                        const SizedBox(height: 16),
-                        StrategyCardsParams(availableWidth: availableWidth),
-                      ],
-              );
+              return SingleChildScrollView(
+                  child: SizedBox(
+                      height: 1000,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: (selectedSymbol == null)
+                            ? []
+                            : [
+                                buildPrecisionRow(ref, selectedSymbol),
+                                // Conditionally add Row 1
+                                const SizedBox(height: 16),
+                                const StrategyDropdown(),
+                                const SizedBox(height: 16),
+                                const StrategyOrdersTable(),
+                                const SizedBox(height: 16),
+                                StrategyCardsParams(
+                                    availableWidth: availableWidth),
+                                const SizedBox(height: 16),
+                                const EquityCurvePlot(),
+                              ],
+                      )));
             })));
   }
 

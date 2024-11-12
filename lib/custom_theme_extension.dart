@@ -23,7 +23,7 @@ extension CustomThemeData on ThemeData {
       textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold) ??
       const TextStyle();
 
-  TextStyle get listTileSubtitle => textTheme.bodySmall ?? TextStyle();
+  TextStyle get listTileSubtitle => textTheme.bodySmall ?? const TextStyle();
 }
 
 ThemeData buildTheme() {
@@ -37,6 +37,7 @@ ThemeData buildTheme() {
       headlineLarge: TextStyle(color: textColor),
       headlineMedium: TextStyle(color: textColor),
       headlineSmall: TextStyle(color: textColor),
+      labelSmall: TextStyle(color: Colors.grey),
     ),
     dialogBackgroundColor: backgroundColor,
     cardTheme: const CardTheme(
@@ -63,9 +64,6 @@ ThemeData buildTheme() {
       onPrimary: backgroundColor,
       onSecondary: textColor,
       onSurface: textColor,
-      tertiary: Colors.green, // positiveButtonColor (adjust this color as needed)
-      onTertiary: Colors.white, // positiveButtonTextColor
-      tertiaryContainer: Colors.lightGreen, // optional ripple effect or feedback color
     ),
   );
 }

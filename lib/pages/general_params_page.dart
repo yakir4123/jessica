@@ -6,7 +6,7 @@ import 'package:jessica/models/minutly_updates.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class GeneralParamsPage extends ConsumerWidget {
-  GeneralParamsPage({super.key});
+  const GeneralParamsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -63,7 +63,7 @@ class GeneralParamsPage extends ConsumerWidget {
                   ],
                 ),
               ),
-              GeneralCharts(),
+              const GeneralCharts(),
             ],
           ),
         ),

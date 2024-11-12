@@ -107,10 +107,10 @@ class OrdersPage extends ConsumerWidget {
           // Custom logic to choose labels
           if (xLabels.containsKey(args.value)) {
             // Show only even labels, for example
-            return ChartAxisLabel(xLabels[args.value]!, TextStyle());
+            return ChartAxisLabel(xLabels[args.value]!, const TextStyle());
           } else {
             // Skip odd labels by returning an empty string
-            return ChartAxisLabel('', TextStyle());
+            return ChartAxisLabel('', const TextStyle());
           }
         },
       ),
@@ -300,6 +300,7 @@ class OrdersPage extends ConsumerWidget {
             'qty': order.qty,
             'ratioQty': order.ratioQty,
             'price': order.price,
+            'Dollars': order.price * order.qty,
             'timestamp':
                 DateTime.fromMillisecondsSinceEpoch(order.timestamp.toInt()),
             'isMimic': order.isMimic,

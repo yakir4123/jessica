@@ -2,7 +2,6 @@ import 'package:intl/intl.dart';
 import 'package:jessica/services/portfolio_weights_provider.dart';
 import 'package:jessica/utils.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:jessica/services/providers.dart';
 import 'package:jessica/models/minutly_updates.dart';
 import 'package:jessica/widgets/attribute_card.dart';
@@ -31,8 +30,7 @@ class StrategyCardsParams extends ConsumerWidget {
     final portfolioAsyncValue = ref.watch(portfolioWeightsProvider);
     final cardData = createCardsData(
         route.schedulerParams.strategies[selectedStrategy]!,
-        route.schedulerParams.balanceAllocator.allocations[selectedStrategy] ??
-            null);
+        route.schedulerParams.balanceAllocator.allocations[selectedStrategy]);
     List<AttributeCard> sortedEntries =
         arrangeWidgets(cardData.entries.map((entry) {
       return AttributeCard(

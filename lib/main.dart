@@ -63,7 +63,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
       body: IndexedStack(
         index: _selectedIndex,
         children: [
-          GeneralParamsPage(),
+          const GeneralParamsPage(),
           OrdersPage(navigateToRoutesPage: navigateToRoutesPage),
           const RoutesPage(),
         ],
