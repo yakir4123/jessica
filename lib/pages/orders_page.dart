@@ -5,9 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:jessica/models/minutly_updates.dart';
 import 'package:jessica/services/providers.dart';
+import 'package:jessica/widgets/positive_button.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 class OrdersPage extends ConsumerWidget {
+  final void Function() navigateToRoutesPage;
+
+  const OrdersPage({required this.navigateToRoutesPage, super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,7 +46,7 @@ class OrdersPage extends ConsumerWidget {
                 ),
               ),
             ),
-            ordersPlotWidget(context, route, data.botParams.updateTime),
+            ordersPlotWidget(context, ref, route, data.botParams.updateTime),
             // The plot widget
           ],
         );
@@ -50,8 +54,8 @@ class OrdersPage extends ConsumerWidget {
     );
   }
 
-  Widget ordersPlotWidget(
-      BuildContext context, RouteWithOrdersModel route, double updateTime) {
+  Widget ordersPlotWidget(BuildContext context, WidgetRef ref,
+      RouteWithOrdersModel route, double updateTime) {
     RouteOrdersModel routesOrders = route.routeOrders;
     List<StrategyOrderModel> sortedTOrders =
         routesOrders.orders.where((order) => order.timestamp != 0).toList();
@@ -86,7 +90,8 @@ class OrdersPage extends ConsumerWidget {
 
     List<ChartSeries<StrategyOrderModel, num>> series =
         partiallyFilledOrders(context, indexedOrders);
-    series.addAll(filledOrders(context, indexedOrders, maxPrice, minPrice));
+    series
+        .addAll(filledOrders(context, ref, indexedOrders, maxPrice, minPrice));
     series.add(currentPrice(context, indexedOrders, routesOrders.currentPrice));
 
     Map<double, String> xLabels = getXLabels(indexedOrders);
@@ -140,8 +145,12 @@ class OrdersPage extends ConsumerWidget {
     }).toList();
   }
 
-  List<ChartSeries<StrategyOrderModel, num>> filledOrders(BuildContext context,
-      List<IndexedOrder> indexedOrders, double maxPrice, double minPrice) {
+  List<ChartSeries<StrategyOrderModel, num>> filledOrders(
+      BuildContext context,
+      WidgetRef ref,
+      List<IndexedOrder> indexedOrders,
+      double maxPrice,
+      double minPrice) {
     return indexedOrders.map((entry) {
       int index = entry.index;
       StrategyOrderModel order = entry.order;
@@ -155,11 +164,9 @@ class OrdersPage extends ConsumerWidget {
               size * (1 - order.ratioQty) / 2 * (maxPrice - minPrice) / 276,
           pointColorMapper: (StrategyOrderModel o, _) => _getColor(o),
           markerSettings: MarkerSettings(
-              height: size * order.ratioQty,
-              width: size,
-              shape: shape),
+              height: size * order.ratioQty, width: size, shape: shape),
           onPointTap: (ChartPointDetails point) {
-            _showOrderDetails(context, order);
+            _showOrderDetails(context, ref, order);
           });
     }).toList();
   }
@@ -261,7 +268,8 @@ class OrdersPage extends ConsumerWidget {
     return (value / 5000) * (100 - 15) + 15;
   }
 
-  void _showOrderDetails(BuildContext context, StrategyOrderModel order) {
+  void _showOrderDetails(
+      BuildContext context, WidgetRef ref, StrategyOrderModel order) {
     String title = order.strategyId;
     List<String> splittedStrategyId = order.strategyId.split("--");
     if (splittedStrategyId.length >= 3) {
@@ -271,7 +279,22 @@ class OrdersPage extends ConsumerWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text(title),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(child: Text(title)), // Title on the left
+              IconButton(
+                icon: Icon(
+                  Icons.close,
+                  color: Theme.of(context).colorScheme.secondary,
+                ),
+                onPressed: () {
+                  Navigator.of(context)
+                      .pop(); // Close the dialog when 'X' is pressed
+                },
+              ),
+            ],
+          ),
           content: Text({
             'Strategy': order.strategyId,
             'qty': order.qty,
@@ -285,13 +308,10 @@ class OrdersPage extends ConsumerWidget {
             'isExecuted': order.isExecuted,
           }.entries.map((entry) => '${entry.key}: ${entry.value}').join('\n')),
           actions: <Widget>[
-            TextButton(
-              child: Text(
-                'Close',
-                style:
-                    TextStyle(color: Theme.of(context).colorScheme.secondary),
-              ),
+            PositiveButton(
+              text: 'Go to',
               onPressed: () {
+                goToRoutesPage(context, ref, order.strategyId);
                 Navigator.of(context).pop();
               },
             ),
@@ -299,6 +319,15 @@ class OrdersPage extends ConsumerWidget {
         );
       },
     );
+  }
+
+  void goToRoutesPage(BuildContext context, WidgetRef ref, String strategyId) {
+    final symbol = strategyId.split('--')[2];
+    ref.read(selectedSymbolProvider.notifier).state = symbol;
+    ref.read(selectedStrategyProvider.notifier).state = strategyId;
+
+    (context as Element).markNeedsBuild(); // Trigger a rebuild if necessary
+    navigateToRoutesPage();
   }
 }
 

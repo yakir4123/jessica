@@ -63,6 +63,9 @@ ThemeData buildTheme() {
       onPrimary: backgroundColor,
       onSecondary: textColor,
       onSurface: textColor,
+      tertiary: Colors.green, // positiveButtonColor (adjust this color as needed)
+      onTertiary: Colors.white, // positiveButtonTextColor
+      tertiaryContainer: Colors.lightGreen, // optional ripple effect or feedback color
     ),
   );
 }

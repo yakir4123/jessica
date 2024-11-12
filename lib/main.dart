@@ -60,76 +60,12 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   actions: [
-      //     IconButton(
-      //       icon: Icon(
-      //         Icons.list,
-      //         color: Theme.of(context).colorScheme.secondary,
-      //       ),
-      //       onPressed: () {
-      //         showDialog(
-      //           context: context,
-      //           builder: (context) {
-      //             return AlertDialog(
-      //               title: const Text('Select Route'),
-      //               content: SizedBox(
-      //                 width: double.maxFinite,
-      //                 child: ListView(
-      //                   children: dataService.decodedMessage.keys.map((key) {
-      //                     return Card(
-      //                       margin: const EdgeInsets.symmetric(vertical: 8.0),
-      //                       child: ListTile(
-      //                         title: Column(
-      //                           crossAxisAlignment: CrossAxisAlignment.start,
-      //                           children: key.split(':').map(
-      //                             (part) {
-      //                               return Text(
-      //                                 part,
-      //                                 style: const TextStyle(
-      //                                   fontSize: 14,
-      //                                 ),
-      //                               );
-      //                             },
-      //                           ).toList(),
-      //                         ),
-      //                         onTap: () {
-      //                           dataService.selectKey(key);
-      //                           Navigator.of(context).pop();
-      //                         },
-      //                       ),
-      //                     );
-      //                   }).toList(),
-      //                 ),
-      //               ),
-      //             );
-      //           },
-      //         );
-      //       },
-      //     ),
-      //   ],
-      //   title: Column(
-      //     crossAxisAlignment: CrossAxisAlignment.start,
-      //     children: dataService.selectedKey.split(':').map(
-      //       (part) {
-      //         return Text(
-      //           part,
-      //           style: const TextStyle(
-      //             fontSize: 14,
-      //             overflow: TextOverflow.ellipsis,
-      //           ),
-      //         );
-      //       },
-      //     ).toList(),
-      //   ),
-      //   toolbarHeight: 100,
-      // ),
       body: IndexedStack(
         index: _selectedIndex,
         children: [
           GeneralParamsPage(),
-          OrdersPage(),
-          RoutesPage(),
+          OrdersPage(navigateToRoutesPage: navigateToRoutesPage),
+          const RoutesPage(),
         ],
       ),
       bottomNavigationBar: Theme(
@@ -161,5 +97,12 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
         ),
       ),
     );
+  }
+
+  // Function to navigate to the Routes page and update providers
+  void navigateToRoutesPage() {
+    setState(() {
+      _selectedIndex = 2;
+    });
   }
 }
