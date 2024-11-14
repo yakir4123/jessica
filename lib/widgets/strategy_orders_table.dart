@@ -45,7 +45,7 @@ class StrategyOrdersTable extends ConsumerWidget {
               ),
             ),
             columnWidths: const {
-              0: FlexColumnWidth(1), // Equal widths for each column
+              0: FlexColumnWidth(1),
               1: FlexColumnWidth(1),
               2: FlexColumnWidth(1),
             },

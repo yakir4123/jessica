@@ -1,3 +1,6 @@
+import 'package:flutter/services.dart';
+import 'package:jessica/pages/orders_table_page.dart';
+
 import 'custom_theme_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:jessica/pages/orders_page.dart';
@@ -9,7 +12,11 @@ import 'package:jessica/pages/general_params_page.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-  runApp(const ProviderScope(child: MyApp()));
+  SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]).then((_) {
+    runApp(const ProviderScope(child: MyApp()));
+  });
 }
 
 const Color primaryColor = Color(0xff1F205B);
@@ -66,6 +73,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
           const GeneralParamsPage(),
           OrdersPage(navigateToRoutesPage: navigateToRoutesPage),
           const RoutesPage(),
+          const OrdersTablePage(),
         ],
       ),
       bottomNavigationBar: Theme(
@@ -74,6 +82,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
           highlightColor: Colors.transparent,
         ),
         child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
           items: const <BottomNavigationBarItem>[
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
@@ -86,6 +95,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
             BottomNavigationBarItem(
               icon: Icon(Icons.add_road),
               label: 'Routes',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.table_chart),
+              label: 'Orders Table',
             ),
           ],
           currentIndex: _selectedIndex,

@@ -133,6 +133,7 @@ class StrategyCardsParams extends ConsumerWidget {
     if (allocation == null) {
       return res;
     }
+    res.addAll(flattenList('orders', params.position.allOrders));
     res['qty allocated'] = formatDouble(allocation.qtyAllocation);
     res['dollar allocated'] = formatDouble(allocation.dollarAllocation);
     res['used allocation'] = formatDouble(allocation.usedAllocated);
@@ -191,6 +192,9 @@ class StrategyCardsParams extends ConsumerWidget {
         flatMap.addAll(flattenList(newKey, list[i]));
       } else if (list[i] is double) {
         flatMap[newKey] = formatDouble(list[i]);
+      } else if (list[i] is OrderModel){
+        flatMap['$newKey.qty'] = formatDouble(list[i].qty);
+        flatMap['$newKey.price'] = formatDouble(list[i].price);
       } else {
         flatMap[newKey] = '${list[i]}';
       }
