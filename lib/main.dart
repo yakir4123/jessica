@@ -73,7 +73,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
           const GeneralParamsPage(),
           OrdersPage(navigateToRoutesPage: navigateToRoutesPage),
           const RoutesPage(),
-          const OrdersTablePage(),
+          OrdersTablePage(navigateToRoutesPage: navigateToRoutesPage),
         ],
       ),
       bottomNavigationBar: Theme(
