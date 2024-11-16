@@ -1,4 +1,5 @@
 import 'package:flutter/services.dart';
+import 'package:jessica/pages/logs_page.dart';
 import 'package:jessica/pages/orders_table_page.dart';
 
 import 'custom_theme_extension.dart';
@@ -74,6 +75,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
           OrdersPage(navigateToRoutesPage: navigateToRoutesPage),
           const RoutesPage(),
           OrdersTablePage(navigateToRoutesPage: navigateToRoutesPage),
+          const LogsTablePage(),
         ],
       ),
       bottomNavigationBar: Theme(
@@ -99,6 +101,10 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
             BottomNavigationBarItem(
               icon: Icon(Icons.table_chart),
               label: 'Orders Table',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.note_alt),
+              label: 'Logs',
             ),
           ],
           currentIndex: _selectedIndex,
