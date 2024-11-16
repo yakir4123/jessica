@@ -28,29 +28,31 @@ class OrdersPage extends ConsumerWidget {
         child: Text('No orders available'),
       );
     }
-    return ListView(
-      padding: const EdgeInsets.all(8.0),
-      children: routes.map((route) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Align(
-              alignment: Alignment.center, // Centers the title horizontally
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Text(
-                  route.symbol, // Display the title based on route.symbol
-                  style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold), // Optional styling
+    return SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.all(8.0),
+        children: routes.map((route) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Align(
+                alignment: Alignment.center, // Centers the title horizontally
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(
+                    route.symbol, // Display the title based on route.symbol
+                    style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold), // Optional styling
+                  ),
                 ),
               ),
-            ),
-            ordersPlotWidget(context, ref, route, data.botParams.updateTime),
-            // The plot widget
-          ],
-        );
-      }).toList(),
+              ordersPlotWidget(context, ref, route, data.botParams.updateTime),
+              // The plot widget
+            ],
+          );
+        }).toList(),
+      ),
     );
   }
 
