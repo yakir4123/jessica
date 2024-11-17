@@ -55,27 +55,31 @@ class _PortfolioChartWidgetState extends State<PortfolioChartWidget> {
           ),
           const SizedBox(height: 16.0), // Spacing between charts
           // Stacked Area Chart
-          SfCartesianChart(
-            primaryXAxis: DateTimeAxis(),
-            primaryYAxis: NumericAxis(
-              minimum: 0,
-              maximum: 1,
+
+          FittedBox(
+            child: SfCartesianChart(
+              primaryXAxis: DateTimeAxis(),
+              primaryYAxis: NumericAxis(
+                minimum: 0,
+                maximum: 1,
+              ),
+              series: <ChartSeries>[
+                for (String symbol in symbols)
+                  if (selectedSymbols[symbol]!)
+                    StackedAreaSeries<_ChartData, DateTime>(
+                      dataSource: lineChartData
+                          .where((data) => data.symbol == symbol)
+                          .toList(),
+                      xValueMapper: (_ChartData data, _) => data.timestamp,
+                      yValueMapper: (_ChartData data, _) => data.weight,
+                      pointColorMapper: (_ChartData data, _) =>
+                          _getColor(data.symbol),
+                      color: _getColor(symbol),
+                      name: symbol,
+                    ),
+              ],
+              tooltipBehavior: TooltipBehavior(enable: true),
             ),
-            series: <ChartSeries>[
-              for (String symbol in symbols)
-                if (selectedSymbols[symbol]!)
-                  StackedAreaSeries<_ChartData, DateTime>(
-                    dataSource: lineChartData
-                        .where((data) => data.symbol == symbol)
-                        .toList(),
-                    xValueMapper: (_ChartData data, _) => data.timestamp,
-                    yValueMapper: (_ChartData data, _) => data.weight,
-                    pointColorMapper: (_ChartData data, _) =>
-                        _getColor(data.symbol),
-                    name: symbol,
-                  ),
-            ],
-            tooltipBehavior: TooltipBehavior(enable: true),
           ),
           const SizedBox(height: 16.0), // Spacing
           Wrap(

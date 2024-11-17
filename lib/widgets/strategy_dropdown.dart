@@ -1,4 +1,3 @@
-// Define a provider to track the selected strategy
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jessica/services/providers.dart';
@@ -19,6 +18,7 @@ class StrategyDropdown extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8.0),
       child: SizedBox(
         width: double.infinity,
+        height: 100,
         child: Theme(
           data: Theme.of(context).copyWith(
             canvasColor: Theme.of(context).cardColor,
@@ -31,6 +31,8 @@ class StrategyDropdown extends ConsumerWidget {
           ),
           child: DropdownButton<String>(
             isExpanded: true,
+            itemHeight: 110.0,
+            alignment: Alignment.center,
             hint: Text(
               selectedStrategyKey ?? 'Select a strategy',
               style: TextStyle(
@@ -41,17 +43,40 @@ class StrategyDropdown extends ConsumerWidget {
             onChanged: (String? newKey) {
               ref.read(selectedStrategyProvider.notifier).state = newKey;
             },
-            items: strategies.entries.map((entry) {
-              return DropdownMenuItem<String>(
-                value: entry.key,
-                child: Text(
-                  entry.key,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface,
+            underline: const Divider(
+              color: Colors.transparent,
+            ),
+            items: strategies.entries.map(
+              (entry) {
+                return DropdownMenuItem<String>(
+                  value: entry.key,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      minWidth: double.infinity,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          height: 94,
+                          child: Center(
+                            child: Text(
+                              entry.key,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const Divider(), // Divider between items
+                      ],
+                    ),
                   ),
-                ),
-              );
-            }).toList(),
+                );
+              },
+            ).toList(),
           ),
         ),
       ),

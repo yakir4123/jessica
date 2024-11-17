@@ -24,26 +24,23 @@ class RoutesPage extends ConsumerWidget {
                 builder: (BuildContext context, BoxConstraints constraints) {
               final double availableWidth = constraints.maxWidth;
               return SingleChildScrollView(
-                  child: SizedBox(
-                      height: 1000,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: (selectedSymbol == null)
-                            ? []
-                            : [
-                                buildPrecisionRow(ref, selectedSymbol),
-                                // Conditionally add Row 1
-                                const SizedBox(height: 16),
-                                const StrategyDropdown(),
-                                const SizedBox(height: 16),
-                                const StrategyOrdersTable(),
-                                const SizedBox(height: 16),
-                                StrategyCardsParams(
-                                    availableWidth: availableWidth),
-                                const SizedBox(height: 16),
-                                const EquityCurvePlot(),
-                              ],
-                      )));
+                  child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: (selectedSymbol == null)
+                    ? []
+                    : [
+                        buildPrecisionRow(ref, selectedSymbol),
+                        // Conditionally add Row 1
+                        const SizedBox(height: 16),
+                        Container(height: 100, child: const StrategyDropdown()),
+                        const SizedBox(height: 16),
+                        const StrategyOrdersTable(),
+                        const SizedBox(height: 16),
+                        StrategyCardsParams(availableWidth: availableWidth),
+                        const SizedBox(height: 16),
+                        const EquityCurvePlot(),
+                      ],
+              ));
             })));
   }
 
