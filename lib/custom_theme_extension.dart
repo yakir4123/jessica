@@ -7,6 +7,14 @@ const Color textColor = Color(0xFFFDFDFE);
 const Color secondaryColor = Color(0xFF3C3D78);
 
 extension CustomThemeData on ThemeData {
+  ThemeData get withCustomCheckboxTheme {
+    return copyWith(
+      checkboxTheme: const CheckboxThemeData(
+        side: BorderSide(color: Colors.white, width: 2),
+      ),
+    );
+  }
+
   TextStyle get expansionTileLeading =>
       textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold) ??
       const TextStyle();
@@ -29,6 +37,9 @@ extension CustomThemeData on ThemeData {
 ThemeData buildTheme() {
   return ThemeData(
     primaryColor: primaryColor,
+    checkboxTheme: const CheckboxThemeData(
+      side: BorderSide(color: Colors.white, width: 1),
+    ),
     scaffoldBackgroundColor: backgroundColor,
     textTheme: const TextTheme(
       bodyLarge: TextStyle(color: textColor),
