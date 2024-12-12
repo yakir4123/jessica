@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jessica/custom_theme_extension.dart';
 import 'package:jessica/models/audit_logs.dart';
 import 'package:jessica/models/minutly_updates.dart';
 import 'package:jessica/services/logs_table_provider.dart';
 import 'package:jessica/services/providers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LogsTablePage extends ConsumerWidget {
   const LogsTablePage({super.key});
@@ -257,6 +259,54 @@ class LogsTablePage extends ConsumerWidget {
     );
   }
 
+  void _showDateTimePicker(
+      BuildContext context, TextEditingController controller) async {
+    // Custom Theme for Date Picker
+
+    final DateTime? date = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: Theme.of(context).dateTimePickerTheme,
+          child: child!,
+        );
+      },
+    );
+
+    if (date != null) {
+      final TimeOfDay? time = await showTimePicker(
+        context: context,
+        initialTime: TimeOfDay.now(),
+        builder: (BuildContext context, Widget? child) {
+          return Theme(
+            data: Theme.of(context).dateTimePickerTheme,
+            child: child!,
+          );
+        },
+      );
+
+      if (time != null) {
+        // Combine date and time
+        final DateTime dateTime = DateTime(
+          date.year,
+          date.month,
+          date.day,
+          time.hour,
+          time.minute,
+        );
+
+        // Convert to UTC milliseconds since epoch
+        final int utcMilliseconds = dateTime.toUtc().millisecondsSinceEpoch;
+
+        // Update the text field
+        controller.text = utcMilliseconds.toString();
+      }
+    }
+  }
+
   void _showFormDialog(BuildContext context, WidgetRef ref,
       {AuditColumnSettings? columnSetting, int? index}) {
     final TextEditingController columnController =
@@ -272,6 +322,33 @@ class LogsTablePage extends ConsumerWidget {
       builder: (BuildContext context) {
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) {
+            List<String> history = [];
+
+            Future<void> _loadHistory() async {
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+              setState(() {
+                history = prefs.getStringList('autocomplete_history') ?? [];
+              });
+            }
+
+            Future<void> _saveToHistory(String value) async {
+              SharedPreferences prefs = await SharedPreferences.getInstance();
+
+              // Add the new value, ensuring no duplicates and limiting to 20 items
+              setState(() {
+                if (value.isNotEmpty && !history.contains(value)) {
+                  history.insert(0, value); // Add to the beginning
+                  if (history.length > 20) {
+                    history = history.sublist(0, 20); // Keep only the last 20
+                  }
+                }
+              });
+
+              await prefs.setStringList('autocomplete_history', history);
+            }
+
+            _loadHistory();
+
             return AlertDialog(
               title: const Text('Query Audit Logs'),
               content: SingleChildScrollView(
@@ -303,23 +380,44 @@ class LogsTablePage extends ConsumerWidget {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    TextField(
-                      controller: columnController,
-                      decoration: const InputDecoration(
-                        hintText: 'Column',
-                        border: OutlineInputBorder(),
-                        hintStyle: TextStyle(
-                          color:
-                              Colors.grey, // Set your desired hint text color
-                        ),
-                      ),
+                    Autocomplete<String>(
+                      optionsBuilder: (TextEditingValue textEditingValue) {
+                        if (textEditingValue.text.isEmpty) {
+                          return const Iterable<String>.empty();
+                        }
+                        return history.where((option) => option
+                            .toLowerCase()
+                            .contains(textEditingValue.text.toLowerCase()));
+                      },
+                      onSelected: (String selection) {
+                        columnController.text = selection;
+                      },
+                      fieldViewBuilder: (BuildContext context,
+                          TextEditingController fieldTextEditingController,
+                          FocusNode focusNode,
+                          VoidCallback onFieldSubmitted) {
+                        return TextField(
+                          controller: fieldTextEditingController,
+                          focusNode: focusNode,
+                          decoration: const InputDecoration(
+                            hintText: 'Column',
+                            border: OutlineInputBorder(),
+                            hintStyle: TextStyle(
+                              color: Colors.grey,
+                            ),
+                          ),
+                          onSubmitted: (value) {
+                            _saveToHistory(value);
+                          },
+                        );
+                      },
                     ),
                     if (selectedOption == 'where') ...[
                       const SizedBox(height: 10),
                       Row(
                         children: [
                           Expanded(
-                            flex: 2,
+                            flex: 1,
                             child: DropdownButtonFormField<String>(
                               dropdownColor: Theme.of(context).cardColor,
                               value: selectedOperator,
@@ -348,12 +446,34 @@ class LogsTablePage extends ConsumerWidget {
                                   value: '!=',
                                   child: Text('!='),
                                 ),
+                                DropdownMenuItem(
+                                  value: 'is before',
+                                  child: Text('is before'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'is after',
+                                  child: Text('is after'),
+                                ),
                               ],
                               onChanged: (String? newValue) {
                                 if (newValue != null) {
-                                  setState(() {
-                                    selectedOperator = newValue;
-                                  });
+                                  if (newValue == 'is before') {
+                                    _showDateTimePicker(
+                                        context, valueController);
+                                    setState(() {
+                                      selectedOperator = "<=";
+                                    });
+                                  } else if (newValue == 'is after') {
+                                    _showDateTimePicker(
+                                        context, valueController);
+                                    setState(() {
+                                      selectedOperator = ">=";
+                                    });
+                                  } else {
+                                    setState(() {
+                                      selectedOperator = newValue;
+                                    });
+                                  }
                                 }
                               },
                               decoration: const InputDecoration(
@@ -368,7 +488,7 @@ class LogsTablePage extends ConsumerWidget {
                           ),
                           const SizedBox(width: 10),
                           Expanded(
-                            flex: 3,
+                            flex: 1,
                             child: TextField(
                               controller: valueController,
                               decoration: const InputDecoration(
