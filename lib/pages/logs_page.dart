@@ -309,8 +309,6 @@ class LogsTablePage extends ConsumerWidget {
 
   void _showFormDialog(BuildContext context, WidgetRef ref,
       {AuditColumnSettings? columnSetting, int? index}) {
-    final TextEditingController columnController =
-        TextEditingController(text: columnSetting?.column ?? '');
     final TextEditingController valueController =
         TextEditingController(text: columnSetting?.value ?? '');
     String selectedOption = columnSetting?.query ?? 'select';
@@ -320,262 +318,280 @@ class LogsTablePage extends ConsumerWidget {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            List<String> history = [];
+        return Consumer(builder: (consumerContext, ref, child) {
+          final columnControllerProvider =
+              Provider<TextEditingController>((ref) {
+            return TextEditingController();
+          });
+          return StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              List<String> history = [];
+              FocusNode focusNode = FocusNode();
 
-            Future<void> _loadHistory() async {
-              SharedPreferences prefs = await SharedPreferences.getInstance();
-              setState(() {
-                history = prefs.getStringList('autocomplete_history') ?? [];
-              });
-            }
+              Future<void> _loadHistory() async {
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                setState(() {
+                  history = prefs.getStringList('autocomplete_history') ?? [];
+                });
+              }
 
-            Future<void> _saveToHistory(String value) async {
-              SharedPreferences prefs = await SharedPreferences.getInstance();
+              Future<void> _saveToHistory(String value) async {
+                SharedPreferences prefs = await SharedPreferences.getInstance();
 
-              // Add the new value, ensuring no duplicates and limiting to 20 items
-              setState(() {
-                if (value.isNotEmpty && !history.contains(value)) {
-                  history.insert(0, value); // Add to the beginning
-                  if (history.length > 20) {
-                    history = history.sublist(0, 20); // Keep only the last 20
+                // Add the new value, ensuring no duplicates and limiting to 20 items
+                setState(() {
+                  if (value.isNotEmpty && !history.contains(value)) {
+                    history.insert(0, value); // Add to the beginning
+                    if (history.length > 20) {
+                      history = history.sublist(0, 20); // Keep only the last 20
+                    }
                   }
-                }
-              });
+                });
 
-              await prefs.setStringList('autocomplete_history', history);
-            }
+                await prefs.setStringList('autocomplete_history', history);
+              }
 
-            _loadHistory();
+              _loadHistory();
 
-            return AlertDialog(
-              title: const Text('Query Audit Logs'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    DropdownButtonFormField<String>(
-                      dropdownColor: Theme.of(context).cardColor,
-                      value: selectedOption,
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'select',
-                          child: Text('Select'),
+              return AlertDialog(
+                title: const Text('Query Audit Logs'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      DropdownButtonFormField<String>(
+                        dropdownColor: Theme.of(context).cardColor,
+                        value: selectedOption,
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'select',
+                            child: Text('Select'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'where',
+                            child: Text('Where'),
+                          ),
+                        ],
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              selectedOption = newValue;
+                            });
+                          }
+                        },
+                        decoration: const InputDecoration(
+                          border: OutlineInputBorder(),
                         ),
-                        DropdownMenuItem(
-                          value: 'where',
-                          child: Text('Where'),
+                      ),
+                      const SizedBox(height: 10),
+                      Autocomplete<String>(
+                        optionsBuilder: (TextEditingValue textEditingValue) {
+                          if (focusNode.hasFocus &&
+                              textEditingValue.text.isEmpty) {
+                            return history.take(10);
+                          }
+                          return history.where((option) => option
+                              .toLowerCase()
+                              .contains(textEditingValue.text.toLowerCase()));
+                        },
+                        onSelected: (String selection) {
+                          final columnController =
+                              ref.read(columnControllerProvider);
+                          columnController.text = selection;
+                        },
+                        fieldViewBuilder: (BuildContext context,
+                            TextEditingController fieldTextEditingController,
+                            FocusNode autocompleteFocusNode,
+                            VoidCallback onFieldSubmitted) {
+                          final columnController =
+                              ref.read(columnControllerProvider);
+
+                          // Sync columnController with fieldTextEditingController
+                          fieldTextEditingController.addListener(() {
+                            columnController.text =
+                                fieldTextEditingController.text;
+                          });
+
+                          return TextField(
+                            controller: fieldTextEditingController,
+                            focusNode: autocompleteFocusNode,
+                            decoration: const InputDecoration(
+                              hintText: 'Column',
+                              border: OutlineInputBorder(),
+                              hintStyle: TextStyle(
+                                color: Colors.grey,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                      if (selectedOption == 'where') ...[
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(
+                              flex: 1,
+                              child: DropdownButtonFormField<String>(
+                                dropdownColor: Theme.of(context).cardColor,
+                                value: selectedOperator,
+                                items: const [
+                                  DropdownMenuItem(
+                                    value: '>',
+                                    child: Text('>'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: '>=',
+                                    child: Text('>='),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: '==',
+                                    child: Text('=='),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: '<',
+                                    child: Text('<'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: '<=',
+                                    child: Text('<='),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: '!=',
+                                    child: Text('!='),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'is before',
+                                    child: Text('is before'),
+                                  ),
+                                  DropdownMenuItem(
+                                    value: 'is after',
+                                    child: Text('is after'),
+                                  ),
+                                ],
+                                onChanged: (String? newValue) {
+                                  if (newValue != null) {
+                                    if (newValue == 'is before') {
+                                      _showDateTimePicker(
+                                          context, valueController);
+                                      setState(() {
+                                        selectedOperator = "<=";
+                                      });
+                                    } else if (newValue == 'is after') {
+                                      _showDateTimePicker(
+                                          context, valueController);
+                                      setState(() {
+                                        selectedOperator = ">=";
+                                      });
+                                    } else {
+                                      setState(() {
+                                        selectedOperator = newValue;
+                                      });
+                                    }
+                                  }
+                                },
+                                decoration: const InputDecoration(
+                                  labelText: 'Operator',
+                                  border: OutlineInputBorder(),
+                                  hintStyle: TextStyle(
+                                    color: Colors
+                                        .grey, // Set your desired hint text color
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              flex: 1,
+                              child: TextField(
+                                controller: valueController,
+                                decoration: const InputDecoration(
+                                  hintText: 'Value',
+                                  border: OutlineInputBorder(),
+                                  hintStyle: TextStyle(
+                                    color: Colors
+                                        .grey, // Set your desired hint text color
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            Checkbox(
+                              value: addSelectField,
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  addSelectField = value ?? false;
+                                });
+                              },
+                            ),
+                            const Text('Add select field'),
+                          ],
                         ),
                       ],
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            selectedOption = newValue;
-                          });
-                        }
-                      },
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Autocomplete<String>(
-                      optionsBuilder: (TextEditingValue textEditingValue) {
-                        if (textEditingValue.text.isEmpty) {
-                          return const Iterable<String>.empty();
-                        }
-                        return history.where((option) => option
-                            .toLowerCase()
-                            .contains(textEditingValue.text.toLowerCase()));
-                      },
-                      onSelected: (String selection) {
-                        columnController.text = selection;
-                      },
-                      fieldViewBuilder: (BuildContext context,
-                          TextEditingController fieldTextEditingController,
-                          FocusNode focusNode,
-                          VoidCallback onFieldSubmitted) {
-                        return TextField(
-                          controller: fieldTextEditingController,
-                          focusNode: focusNode,
-                          decoration: const InputDecoration(
-                            hintText: 'Column',
-                            border: OutlineInputBorder(),
-                            hintStyle: TextStyle(
-                              color: Colors.grey,
-                            ),
-                          ),
-                          onSubmitted: (value) {
-                            _saveToHistory(value);
-                          },
-                        );
-                      },
-                    ),
-                    if (selectedOption == 'where') ...[
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 1,
-                            child: DropdownButtonFormField<String>(
-                              dropdownColor: Theme.of(context).cardColor,
-                              value: selectedOperator,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: '>',
-                                  child: Text('>'),
-                                ),
-                                DropdownMenuItem(
-                                  value: '>=',
-                                  child: Text('>='),
-                                ),
-                                DropdownMenuItem(
-                                  value: '==',
-                                  child: Text('=='),
-                                ),
-                                DropdownMenuItem(
-                                  value: '<',
-                                  child: Text('<'),
-                                ),
-                                DropdownMenuItem(
-                                  value: '<=',
-                                  child: Text('<='),
-                                ),
-                                DropdownMenuItem(
-                                  value: '!=',
-                                  child: Text('!='),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'is before',
-                                  child: Text('is before'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'is after',
-                                  child: Text('is after'),
-                                ),
-                              ],
-                              onChanged: (String? newValue) {
-                                if (newValue != null) {
-                                  if (newValue == 'is before') {
-                                    _showDateTimePicker(
-                                        context, valueController);
-                                    setState(() {
-                                      selectedOperator = "<=";
-                                    });
-                                  } else if (newValue == 'is after') {
-                                    _showDateTimePicker(
-                                        context, valueController);
-                                    setState(() {
-                                      selectedOperator = ">=";
-                                    });
-                                  } else {
-                                    setState(() {
-                                      selectedOperator = newValue;
-                                    });
-                                  }
-                                }
-                              },
-                              decoration: const InputDecoration(
-                                labelText: 'Operator',
-                                border: OutlineInputBorder(),
-                                hintStyle: TextStyle(
-                                  color: Colors
-                                      .grey, // Set your desired hint text color
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            flex: 1,
-                            child: TextField(
-                              controller: valueController,
-                              decoration: const InputDecoration(
-                                hintText: 'Value',
-                                border: OutlineInputBorder(),
-                                hintStyle: TextStyle(
-                                  color: Colors
-                                      .grey, // Set your desired hint text color
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Checkbox(
-                            value: addSelectField,
-                            onChanged: (bool? value) {
-                              setState(() {
-                                addSelectField = value ?? false;
-                              });
-                            },
-                          ),
-                          const Text('Add select field'),
-                        ],
-                      ),
                     ],
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop(); // Close the dialog
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor:
-                        Colors.white, // Sets the text color to white
                   ),
-                  child: const Text('Cancel'),
                 ),
-                ElevatedButton(
-                  onPressed: () {
-                    final String column = columnController.text;
-                    final String value = valueController.text;
-                    if (index != null) {
-                      ref.read(logsProvider.notifier).updateQuery(
-                            index,
-                            AuditColumnSettings(
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop(); // Close the dialog
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor:
+                          Colors.white, // Sets the text color to white
+                    ),
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      final String column =
+                          ref.read(columnControllerProvider).text;
+                      final String value = valueController.text;
+                      _saveToHistory(column);
+                      if (index != null) {
+                        ref.read(logsProvider.notifier).updateQuery(
+                              index,
+                              AuditColumnSettings(
+                                query: selectedOption,
+                                column: column,
+                                operator: selectedOption == 'where'
+                                    ? selectedOperator
+                                    : null,
+                                value: selectedOption == 'where' ? value : null,
+                              ),
+                            );
+                      } else {
+                        ref
+                            .read(logsProvider.notifier)
+                            .addQuery(AuditColumnSettings(
                               query: selectedOption,
                               column: column,
                               operator: selectedOption == 'where'
                                   ? selectedOperator
                                   : null,
                               value: selectedOption == 'where' ? value : null,
-                            ),
-                          );
-                    } else {
-                      ref
-                          .read(logsProvider.notifier)
-                          .addQuery(AuditColumnSettings(
-                            query: selectedOption,
-                            column: column,
-                            operator: selectedOption == 'where'
-                                ? selectedOperator
-                                : null,
-                            value: selectedOption == 'where' ? value : null,
-                          ));
-                    }
-                    if (addSelectField) {
-                      ref
-                          .read(logsProvider.notifier)
-                          .addQuery(AuditColumnSettings(
-                            query: 'select',
-                            column: column,
-                          ));
-                    }
+                            ));
+                      }
+                      if (addSelectField) {
+                        ref
+                            .read(logsProvider.notifier)
+                            .addQuery(AuditColumnSettings(
+                              query: 'select',
+                              column: column,
+                            ));
+                      }
 
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Submit'),
-                ),
-              ],
-            );
-          },
-        );
+                      Navigator.of(context).pop();
+                    },
+                    child: const Text('Submit'),
+                  ),
+                ],
+              );
+            },
+          );
+        });
       },
     );
   }
