@@ -15,6 +15,19 @@ extension CustomThemeData on ThemeData {
     );
   }
 
+  // Add method for DateTimePicker Theme
+  ThemeData get dateTimePickerTheme {
+    return ThemeData(
+      colorScheme: const ColorScheme.light(
+        primary: Color(0xFFFDFDFE), // Header background color
+        onPrimary: Color(0xFF3C3D78), // Header text color
+        onSurface: Color(0xFFFDFDFE), // Body text color
+        surface: backgroundColor,
+      ),
+      dialogBackgroundColor: backgroundColor, // Background color
+    );
+  }
+
   TextStyle get expansionTileLeading =>
       textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold) ??
       const TextStyle();
