@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 import 'package:jessica/custom_theme_extension.dart';
 import 'package:jessica/models/audit_logs.dart';
 import 'package:jessica/models/minutly_updates.dart';
@@ -211,24 +212,23 @@ class LogsTablePage extends ConsumerWidget {
                       children: columns
                           .map((header) => headerCell(context, ref, header, 0))
                           .toList()),
-                  ...List.generate(logs.length, (index) {
-                    final auditLog = logs[index];
-                    final isEvenRow = index.isEven;
-                    return TableRow(
-                        decoration: BoxDecoration(
-                          color: isEvenRow
-                              ? Theme.of(context)
-                                  .highlightColor // Even row color
-                              : Colors.transparent, // Default for odd rows
-                        ),
-                        children: auditLog.values
-                            .toList()
-                            .map((value) => Text(
-                                  value.toString(),
-                                  textAlign: TextAlign.center,
-                                ))
-                            .toList());
-                  }),
+                  ...generateTableRows(logs, context),
+                  // ...List.generate(logs.length, (index) {
+                  //   final auditLog = logs[index];
+                  //   final isEvenRow = index.isEven;
+                  //   return TableRow(
+                  //       decoration: BoxDecoration(
+                  //         color: isEvenRow
+                  //             ? Theme.of(context)
+                  //                 .highlightColor // Even row color
+                  //             : Colors.transparent, // Default for odd rows
+                  //       ),
+                  //       children: auditLog.entries.map((entry) => Text(
+                  //                 formatCellString(entry.key, entry.value),
+                  //                 textAlign: TextAlign.center,
+                  //               )
+                  //       ).toList());
+                  // }),
                 ],
               ),
             ],
@@ -236,6 +236,49 @@ class LogsTablePage extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  List<TableRow> generateTableRows(List<Map<String, dynamic>> logs, BuildContext context) {
+    Color evenColor = Theme.of(context).highlightColor;
+    Color oddColor = Colors.transparent;
+    Color currentColor = evenColor;
+
+    dynamic previousTimestamp; // To track the last timestamp
+
+    return List.generate(logs.length, (index) {
+      final auditLog = logs[index];
+      final currentTimestamp = auditLog['jesse_timestamp']; // Extract the timestamp
+
+      // Change color if the timestamp changes
+      if (currentTimestamp != previousTimestamp) {
+        currentColor = (currentColor == evenColor) ? oddColor : evenColor;
+        previousTimestamp = currentTimestamp; // Update the previous timestamp
+      }
+
+      // Generate the table row
+      return TableRow(
+        decoration: BoxDecoration(
+          color: currentColor, // Assign the current color
+        ),
+        children: auditLog.entries
+            .map((entry) => Text(
+          formatCellString(entry.key, entry.value),
+          textAlign: TextAlign.center,
+        ))
+            .toList(),
+      );
+    });
+  }
+
+  String formatCellString(String column, dynamic value) {
+    if (column == 'jesse_timestamp') {
+      DateTime date = DateTime.fromMillisecondsSinceEpoch(value);
+      return DateFormat('HH:mm:ss\ndd/MM/yyyy').format(date);
+    } else if (column == 'created_at') {
+      DateTime date = DateTime.fromMillisecondsSinceEpoch(value);
+      return DateFormat('HH:mm:ss\ndd/MM/nyyyy').format(date);
+    }
+    return value.toString();
   }
 
   Widget headerCell(
@@ -460,23 +503,23 @@ class LogsTablePage extends ConsumerWidget {
                                     child: Text('!='),
                                   ),
                                   DropdownMenuItem(
-                                    value: 'is before',
-                                    child: Text('is before'),
+                                    value: 'before',
+                                    child: Text('before'),
                                   ),
                                   DropdownMenuItem(
-                                    value: 'is after',
-                                    child: Text('is after'),
+                                    value: 'after',
+                                    child: Text('after'),
                                   ),
                                 ],
                                 onChanged: (String? newValue) {
                                   if (newValue != null) {
-                                    if (newValue == 'is before') {
+                                    if (newValue == 'before') {
                                       _showDateTimePicker(
                                           context, valueController);
                                       setState(() {
                                         selectedOperator = "<=";
                                       });
-                                    } else if (newValue == 'is after') {
+                                    } else if (newValue == 'after') {
                                       _showDateTimePicker(
                                           context, valueController);
                                       setState(() {
