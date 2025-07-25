@@ -64,9 +64,9 @@ ThemeData buildTheme() {
       labelSmall: TextStyle(color: Colors.grey),
     ),
     dialogBackgroundColor: backgroundColor,
-    cardTheme: const CardTheme(
-      color: secondaryColor,
-    ),
+    cardTheme: const CardThemeData(
+        color: secondaryColor,
+      ),
     buttonTheme: const ButtonThemeData(
       buttonColor: accentColor,
       textTheme: ButtonTextTheme.primary,

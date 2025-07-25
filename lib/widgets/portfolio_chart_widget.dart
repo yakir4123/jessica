@@ -63,7 +63,7 @@ class _PortfolioChartWidgetState extends State<PortfolioChartWidget> {
                 minimum: 0,
                 maximum: 1,
               ),
-              series: <ChartSeries>[
+              series: <CartesianSeries>[
                 for (String symbol in symbols)
                   if (selectedSymbols[symbol]!)
                     StackedAreaSeries<_ChartData, DateTime>(
