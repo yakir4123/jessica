@@ -90,7 +90,7 @@ class OrdersPage extends ConsumerWidget {
       indexedOrders.add(IndexedOrder(timestampIndex, entry.value));
     }
 
-    List<ChartSeries<StrategyOrderModel, num>> series =
+    List<CartesianSeries<StrategyOrderModel, num>> series =
         partiallyFilledOrders(context, indexedOrders);
     series
         .addAll(filledOrders(context, ref, indexedOrders, maxPrice, minPrice));
@@ -123,7 +123,7 @@ class OrdersPage extends ConsumerWidget {
     );
   }
 
-  List<ChartSeries<StrategyOrderModel, num>> partiallyFilledOrders(
+  List<CartesianSeries<StrategyOrderModel, num>> partiallyFilledOrders(
       BuildContext context, List<IndexedOrder> indexedOrders) {
     return indexedOrders
         .where((entry) => entry.order.ratioQty != 1)
@@ -147,7 +147,7 @@ class OrdersPage extends ConsumerWidget {
     }).toList();
   }
 
-  List<ChartSeries<StrategyOrderModel, num>> filledOrders(
+  List<CartesianSeries<StrategyOrderModel, num>> filledOrders(
       BuildContext context,
       WidgetRef ref,
       List<IndexedOrder> indexedOrders,
@@ -173,7 +173,7 @@ class OrdersPage extends ConsumerWidget {
     }).toList();
   }
 
-  ChartSeries<StrategyOrderModel, num> currentPrice(
+  CartesianSeries<StrategyOrderModel, num> currentPrice(
       BuildContext context, List<IndexedOrder> indexedOrders, double price) {
     int currTimestampIndex = 0;
     if (indexedOrders.isNotEmpty) {
