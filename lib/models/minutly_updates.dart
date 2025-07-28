@@ -371,8 +371,6 @@ class SchedulerParamsModel {
   @JsonKey(name: 'price_precision')
   final int pricePrecision;
 
-  @JsonKey(name: 'orders_book')
-  final List<OrderBookParamsEntryModel> ordersBook;
 
   @JsonKey(name: 'balance_allocator')
   final BalanceAllocationModel balanceAllocator;
@@ -384,7 +382,6 @@ class SchedulerParamsModel {
     required this.riskMargin,
     required this.qtyPrecision,
     required this.pricePrecision,
-    required this.ordersBook,
     required this.balanceAllocator,
     required this.strategies,
   });

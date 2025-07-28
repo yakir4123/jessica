@@ -237,10 +237,6 @@ SchedulerParamsModel _$SchedulerParamsModelFromJson(
       riskMargin: (json['risk_margin'] as num).toDouble(),
       qtyPrecision: (json['qty_precision'] as num).toInt(),
       pricePrecision: (json['price_precision'] as num).toInt(),
-      ordersBook: (json['orders_book'] as List<dynamic>)
-          .map((e) =>
-              OrderBookParamsEntryModel.fromJson(e as Map<String, dynamic>))
-          .toList(),
       balanceAllocator: BalanceAllocationModel.fromJson(
           json['balance_allocator'] as Map<String, dynamic>),
       strategies: (json['strategies'] as Map<String, dynamic>).map(
@@ -255,7 +251,6 @@ Map<String, dynamic> _$SchedulerParamsModelToJson(
       'risk_margin': instance.riskMargin,
       'qty_precision': instance.qtyPrecision,
       'price_precision': instance.pricePrecision,
-      'orders_book': instance.ordersBook,
       'balance_allocator': instance.balanceAllocator,
       'strategies': instance.strategies,
     };
